@@ -1,0 +1,52 @@
+{
+  "name": "final-project",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "api": "tsx watch server/index.ts",
+    "dev:all": "concurrently -k \"npm:api\" \"npm:dev\"",
+    "build": "vue-tsc -b && vite build",
+    "preview": "vite preview",
+    "db:seed": "tsx server/seed.ts",
+    "db:import-osm": "tsx server/import-osm.ts"
+  },
+  "dependencies": {
+    "@capacitor/core": "^8.5.2",
+    "@capacitor/geolocation": "^8.2.3",
+    "@ionic/vue": "^9.0.6",
+    "@ionic/vue-router": "^9.0.6",
+    "bcryptjs": "^3.0.3",
+    "cheerio": "^1.2.0",
+    "cors": "^2.8.6",
+    "dotenv": "^18.0.5",
+    "express": "^5.2.1",
+    "ionicons": "^8.1.0",
+    "jsonwebtoken": "^9.0.3",
+    "leaflet": "^1.9.4",
+    "leaflet.markercluster": "^1.5.3",
+    "pdf-parse": "^1.1.1",
+    "pg": "^8.23.1",
+    "vue": "^3.5.42",
+    "vue-router": "^5.3.1"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^8.5.2",
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/leaflet": "^1.9.22",
+    "@types/leaflet.markercluster": "^1.5.6",
+    "@types/node": "^24.13.3",
+    "@types/pdf-parse": "^1.1.5",
+    "@types/pg": "^8.23.1",
+    "@vitejs/plugin-vue": "^6.0.8",
+    "@vue/tsconfig": "^0.9.1",
+    "concurrently": "^10.0.5",
+    "tsx": "^4.23.15",
+    "typescript": "~6.0.2",
+    "vite": "^8.3.0",
+    "vue-tsc": "^3.3.11"
+  }
+}

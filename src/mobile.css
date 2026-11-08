@@ -1,0 +1,122 @@
+@media(min-width:761px){
+  .app-shell{
+    height:100vh;
+    overflow-x:hidden;
+    overflow-y:auto;
+    overscroll-behavior-y:contain;
+    -webkit-overflow-scrolling:touch;
+  }
+}
+
+@media(max-width:760px){
+  body{min-width:320px}
+  .app-shell{
+    display:block;
+    height:100dvh;
+    min-height:0;
+    overflow-x:hidden;
+    overflow-y:auto;
+    overscroll-behavior-y:contain;
+    -webkit-overflow-scrolling:touch;
+    padding-bottom:calc(68px + env(safe-area-inset-bottom));
+  }
+  .rail{
+    position:fixed;
+    top:auto;
+    bottom:0;
+    left:0;
+    right:0;
+    display:flex;
+    height:calc(60px + env(safe-area-inset-bottom));
+    flex-direction:row;
+    justify-content:space-between;
+    gap:2px;
+    overflow-x:auto;
+    padding:5px 6px calc(5px + env(safe-area-inset-bottom));
+    box-shadow:0 -5px 20px #193e3517;
+    scrollbar-width:none;
+  }
+  .rail::-webkit-scrollbar{display:none}
+  .brand{height:auto;flex:none;gap:0;font-size:0;transform:none;writing-mode:horizontal-tb}
+  .brand-mark{width:29px;height:29px;transform:none;writing-mode:horizontal-tb}
+  .rail-caption{display:none}
+  .rail-link{
+    width:auto;
+    min-width:0;
+    max-width:90px;
+    height:48px;
+    flex:1 1 0;
+    gap:3px;
+    margin:0;
+    padding:2px;
+    font-size:8px;
+    white-space:nowrap;
+  }
+  .rail-link ion-icon{font-size:18px}
+  .rail-bottom{display:flex;flex:none;flex-direction:row;gap:2px;margin:0}
+  .rail-bottom .rail-link{width:auto;min-width:0;font-size:8px}
+  .rail-avatar{display:none}
+  .workspace{padding:18px 15px calc(18px + env(safe-area-inset-bottom))}
+  .topbar{align-items:flex-start;gap:10px;margin-bottom:16px}
+  .topbar>div:first-child{min-width:0}
+  .topbar h1{max-width:none;font-size:21px;line-height:1.2}
+  .top-actions{min-width:0;gap:6px;flex-direction:column;align-items:flex-end}
+  .live-status{font-size:8px}
+  .account-button{max-width:155px;height:34px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:10px}
+  .search-strip{
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    height:auto;
+    min-height:0;
+    gap:6px;
+    padding:7px;
+  }
+  .search-box{grid-column:1/-1;width:100%;min-width:0;height:40px;padding:0 8px}
+  .search-box input{font-size:12px}
+  .select-wrap{
+    min-width:0;
+    height:42px;
+    padding:4px 8px;
+    border:1px solid var(--line);
+    border-radius:5px;
+  }
+  .select-wrap select{min-width:0;font-size:10px}
+  .location-button{width:100%;min-width:0;height:42px;justify-content:center;padding:0 6px;font-size:10px}
+  .content-grid{display:flex;min-height:0;flex-direction:column;gap:11px}
+  .map-panel{order:0;width:100%;height:43dvh;min-height:300px;max-height:470px}
+  .results-panel{order:1;width:100%}
+  .station-list{max-height:280px}
+  .detail-panel{margin-top:13px}
+  .page-foot{flex-wrap:wrap;gap:4px 12px;padding-bottom:10px;font-size:8px}
+  .modal-scrim{align-items:flex-end;padding:0}
+  .auth-modal{width:100%;max-width:none;max-height:calc(100dvh - env(safe-area-inset-top) - 12px);margin:0;border-radius:16px 16px 0 0;padding:27px 20px calc(20px + env(safe-area-inset-bottom))}
+  .role-choice{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+
+@media(max-width:420px){
+  .workspace{padding-right:11px;padding-left:11px}
+  .topbar h1{font-size:19px}
+  .top-actions{gap:5px}
+  .account-button{max-width:128px;padding:0 7px}
+  .rail{padding-right:4px;padding-left:4px}
+  .rail-link,.rail-bottom .rail-link{font-size:7px}
+  .rail-link ion-icon{font-size:17px}
+  .map-panel{min-height:285px}
+  .results-heading{padding-right:13px;padding-left:13px}
+  .notice-line{margin-right:13px;margin-left:13px}
+  .station-row{padding-right:11px;padding-left:11px}
+  .mini-prices{gap:7px}
+  .detail-panel{margin-right:9px;margin-left:9px;padding:12px}
+  .auth-modal{padding-right:15px;padding-left:15px}
+  .role-choice button{padding:9px 5px;font-size:10px}
+}
+
+@media(max-width:350px){
+  .rail{gap:1px}
+  .brand-mark{width:25px;height:25px}
+  .rail-link,.rail-bottom .rail-link{padding-right:1px;padding-left:1px;font-size:6.5px}
+  .rail-link ion-icon{font-size:16px}
+  .search-strip{gap:5px;padding:6px}
+  .select-wrap{padding-right:5px;padding-left:5px}
+  .select-wrap select{font-size:9px}
+}

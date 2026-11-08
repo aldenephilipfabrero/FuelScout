@@ -1,0 +1,82 @@
+.user-page{display:grid;align-content:start;gap:18px;min-width:0;max-height:calc(100vh - 150px);overflow:auto;padding:4px 5px 20px 0}
+.user-heading{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:7px 0 17px;border-bottom:1px solid var(--line)}
+.user-heading h2{margin:5px 0;font:600 24px 'Space Grotesk',sans-serif;color:var(--ink)}
+.user-heading p{margin:0;color:var(--muted);font-size:12px}
+.user-dashboard-avatar,.user-profile-avatar{display:grid;place-items:center;flex:none;border-radius:50%;background:#e8f2d8;color:#345331;font:700 22px 'Space Grotesk',sans-serif}
+.user-dashboard-avatar{width:52px;height:52px}
+.user-tabs{display:flex;gap:7px;border-bottom:1px solid var(--line)}
+.user-tabs button{display:flex;align-items:center;gap:7px;min-height:38px;padding:0 13px;border:0;border-bottom:2px solid transparent;background:transparent;color:#718078;font-size:11px;font-weight:600}
+.user-tabs button ion-icon{font-size:16px}
+.user-tabs button.active{border-color:#70904b;color:#345331}
+.user-welcome-card{display:flex;align-items:center;gap:15px;padding:19px;background:#173e35;border-radius:8px;color:#fff}
+.user-welcome-mark{display:grid;place-items:center;width:42px;height:42px;flex:none;border-radius:50%;background:#c8f36b;color:#173e35}
+.user-welcome-mark ion-icon{font-size:21px}
+.user-welcome-card .eyebrow{color:#b4c9bd}
+.user-welcome-card h3{margin:4px 0;font:600 17px 'Space Grotesk',sans-serif}
+.user-welcome-card p{margin:0;color:#d2ddd7;font-size:11px;line-height:1.5}
+.user-dashboard-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.user-info-card,.user-shortcuts-card,.user-profile-card{min-width:0;padding:18px;background:#fff;border:1px solid var(--line);border-radius:8px}
+.user-card-heading{display:flex;align-items:center;gap:8px;margin-bottom:12px}
+.user-card-heading ion-icon{font-size:18px;color:#557640}
+.user-card-heading h3,.user-shortcuts-card h3{margin:0;color:var(--ink);font:600 15px 'Space Grotesk',sans-serif}
+.user-info-card dl{display:grid;gap:0;margin:0}
+.user-info-card dl>div{display:flex;justify-content:space-between;gap:12px;padding:9px 0;border-bottom:1px solid #eef0eb;font-size:11px}
+.user-info-card dt{color:var(--muted)}
+.user-info-card dd{margin:0;color:var(--ink);font-weight:600;text-align:right;overflow-wrap:anywhere}
+.user-text-button{display:flex;align-items:center;gap:6px;margin-top:13px;padding:0;border:0;background:none;color:#426536;font-size:11px;font-weight:700}
+.user-text-button ion-icon{font-size:14px}
+.user-shortcuts-card>.eyebrow{display:block;margin-bottom:6px}
+.user-shortcuts-card h3{margin-bottom:12px}
+.user-shortcuts-card>button{display:flex;align-items:center;gap:10px;width:100%;padding:11px 0;border:0;border-top:1px solid #eef0eb;background:#fff;text-align:left}
+.user-shortcut-icon{display:grid;place-items:center;width:33px;height:33px;flex:none;border-radius:7px;background:#edf3e5;color:#557640}
+.user-shortcut-icon ion-icon{font-size:17px}
+.user-shortcuts-card>button>span:nth-child(2){display:flex;flex:1;flex-direction:column;gap:3px}
+.user-shortcuts-card>button strong{color:var(--ink);font-size:11px}
+.user-shortcuts-card>button small{color:var(--muted);font-size:9px}
+.user-shortcuts-card>button>ion-icon{color:#7e8983;font-size:15px}
+.user-profile-card{width:min(100%,760px);padding:21px}
+.user-profile-summary{display:flex;align-items:center;gap:13px;padding-bottom:17px;border-bottom:1px solid var(--line)}
+.user-profile-avatar{width:49px;height:49px;font-size:19px}
+.user-profile-summary>div{flex:1;min-width:0}
+.user-profile-summary h3{margin:0 0 4px;color:var(--ink);font:600 16px 'Space Grotesk',sans-serif}
+.user-profile-summary p{margin:0;color:var(--muted);font-size:11px;overflow-wrap:anywhere}
+.user-edit-button{display:flex;align-items:center;gap:6px;padding:8px 10px;border:1px solid var(--line);border-radius:6px;background:#fff;color:#405349;font-size:10px;font-weight:600}
+.user-edit-button ion-icon{font-size:14px}
+.user-profile-message{margin:14px 0 0;color:#3b7650;font-size:11px;line-height:1.5}
+.user-profile-message.is-error{color:#b94b36}
+.user-profile-form{display:grid;grid-template-columns:1fr 1fr;gap:14px;padding-top:17px}
+.user-profile-form label{display:flex;flex-direction:column;gap:6px;color:#58665e;font-size:11px;font-weight:600}
+.user-profile-form input{width:100%;height:40px;padding:0 11px;border:1px solid var(--line);border-radius:6px;outline:none;color:var(--ink);font-size:12px}
+.user-profile-form input:focus{border-color:#72905b;box-shadow:0 0 0 2px #72905b22}
+.user-password-fields{grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.user-profile-form .submit-button{grid-column:1/-1;justify-self:start;min-width:140px}
+.user-dashboard-records{display:grid;gap:12px}
+.user-record-card{min-width:0;padding:18px;background:#fff;border:1px solid var(--line);border-radius:8px}
+.user-record-heading{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.user-record-heading .eyebrow{display:block;margin-bottom:4px}
+.user-record-heading h3{margin:0;color:var(--ink);font:600 15px 'Space Grotesk',sans-serif}
+.user-expense-form{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));align-items:end;gap:12px;padding:15px 0}
+.user-expense-form label{display:flex;flex-direction:column;gap:6px;color:#58665e;font-size:10px;font-weight:600}
+.user-expense-form input,.user-expense-form select{width:100%;height:38px;padding:0 10px;border:1px solid var(--line);border-radius:6px;background:#fff;color:var(--ink);font-size:11px}
+.user-expense-form input:focus,.user-expense-form select:focus{border-color:#72905b;outline:none;box-shadow:0 0 0 2px #72905b22}
+.user-expense-total{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:38px;padding:0 10px;border-radius:6px;background:#f5f7f1;color:var(--muted);font-size:10px}
+.user-expense-total strong{color:var(--ink);font-size:13px}
+.user-expense-form>.submit-button{height:38px}
+.user-expense-list,.user-notification-list{display:grid;border-top:1px solid #eef0eb}
+.user-expense-row,.user-notification{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 0;border-bottom:1px solid #eef0eb}
+.user-expense-row>div{display:grid;gap:4px;min-width:0}
+.user-expense-row strong,.user-notification strong{color:var(--ink);font-size:11px}
+.user-expense-row small,.user-notification time{color:var(--muted);font-size:9px}
+.user-expense-row time{flex:none;color:var(--muted);font-size:9px}
+.user-expense-row>button,.user-mark-read{flex:none;padding:6px 8px;border:1px solid var(--line);border-radius:5px;background:#fff;color:#405349;font-size:9px;font-weight:600}
+.user-notification{align-items:flex-start}
+.user-notification.unread{padding-left:9px;border-left:3px solid #70904b;background:#f8faf5}
+.user-notification.rollback:not(.unread){border-left:3px solid transparent}
+.user-notification-copy{display:grid;gap:4px;min-width:0}
+.user-notification-copy p{margin:0;color:#58665e;font-size:10px;line-height:1.45}
+.user-unread-count{display:inline-grid;place-items:center;min-width:20px;height:20px;margin-left:4px;padding:0 5px;border-radius:10px;background:#e8f2d8;color:#345331;font:700 10px 'Inter',sans-serif;vertical-align:2px}
+.user-record-empty{margin:0;padding:13px 0;color:var(--muted);font-size:10px;line-height:1.5}
+.login-role-choice{display:grid;grid-template-columns:repeat(3,minmax(0,1fr))}
+.auth-message{margin:0 0 12px;padding:9px 10px;border-radius:5px;background:#fff0ec;color:#a94533;font-size:10px;line-height:1.5}
+.auth-message:not(.is-error){background:#edf5e8;color:#426536}
+@media(max-width:760px){.user-page{max-height:calc(100dvh - 120px);gap:14px}.user-heading h2{font-size:21px}.user-dashboard-grid{grid-template-columns:1fr}.user-welcome-card{align-items:flex-start;padding:15px}.user-profile-card{padding:15px}.user-profile-form,.user-password-fields,.user-expense-form{grid-template-columns:1fr}.user-password-fields{grid-column:1/-1}.user-profile-form .submit-button{width:100%}.user-edit-button{font-size:0}.user-edit-button ion-icon{font-size:16px}.user-record-card{padding:15px}.user-expense-row{align-items:flex-start;flex-wrap:wrap}.user-expense-row time{margin-left:auto}.user-notification{flex-wrap:wrap}.user-notification .user-mark-read{margin-left:auto}}

@@ -1,0 +1,65 @@
+.national-advisory{display:grid;gap:12px;padding:18px;background:#fff;border:1px solid var(--line);border-radius:8px}
+.national-advisory-heading{display:flex;justify-content:space-between;align-items:center;gap:18px}
+.national-advisory-heading h3{margin:4px 0;font:600 16px 'Space Grotesk',sans-serif;color:var(--ink)}
+.national-advisory-heading p{margin:0;color:var(--muted);font-size:11px}
+.doe-source-link{flex:none;padding:10px 13px;border-radius:6px;background:#173e35;color:#fff;font-size:11px;font-weight:700;text-decoration:none}
+.doe-source-link:hover{background:#245748}
+.rail-avatar{padding:0;background:transparent;cursor:pointer}
+.rail-avatar:hover,.rail-avatar.active{background:var(--lime);border-color:var(--lime);color:#173e35}
+.rail-avatar:focus-visible{outline:2px solid var(--lime);outline-offset:3px}
+.profile-page{display:grid;align-content:start;gap:20px;min-width:0;padding:4px 0 18px}
+.profile-heading{padding:7px 0 17px;border-bottom:1px solid var(--line)}
+.profile-heading h2{margin:5px 0;font:600 24px 'Space Grotesk',sans-serif;color:var(--ink)}
+.profile-heading p{margin:0;color:var(--muted);font-size:12px}
+.profile-card{width:min(100%,720px);padding:22px;background:#fff;border:1px solid var(--line);border-radius:8px}
+.profile-summary{display:flex;align-items:center;gap:15px;padding-bottom:17px}
+.profile-avatar{width:58px;height:58px;flex:none;display:grid;place-items:center;border-radius:50%;background:#e8f2d8;color:#345331;font:700 24px 'Space Grotesk',sans-serif}
+.profile-summary h3{margin:0 0 4px;color:var(--ink);font:600 18px 'Space Grotesk',sans-serif}
+.profile-summary p{margin:0;color:var(--muted);font-size:12px}
+.profile-card .profile-account-info{margin-bottom:17px}
+.profile-notice{margin:-5px 0 15px;color:#3b7650;font-size:11px;line-height:1.5}
+.profile-notice.is-error{color:#b94b36}
+.profile-form{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.profile-form label{display:flex;flex-direction:column;gap:6px;color:#58665e;font-size:11px;font-weight:600}
+.profile-form input{width:100%;height:40px;padding:0 11px;border:1px solid var(--line);border-radius:6px;outline:none;color:var(--ink);font-size:12px}
+.profile-form input:focus{border-color:#72905b;box-shadow:0 0 0 2px #72905b22}
+.profile-password-fields{grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.profile-form .submit-button{grid-column:1/-1;justify-self:start;min-width:140px}
+@media(max-width:760px){.national-advisory{padding:13px}.national-advisory-heading{align-items:flex-start;flex-direction:column;gap:12px}.profile-card{padding:16px}.profile-form,.profile-password-fields{grid-template-columns:1fr}.profile-password-fields{grid-column:1/-1}.profile-form .submit-button{width:100%}}
+.station-location-fields{display:grid;gap:8px;padding:10px;border:1px solid #e1e7dd;border-radius:6px;background:#f8faf6}
+.station-location-heading{display:grid;gap:3px;color:#405349;font-size:10px;font-weight:700}
+.station-location-heading small{color:#78847c;font-size:9px;font-weight:400;line-height:1.4}
+.station-location-button{display:flex;align-items:center;justify-content:center;gap:6px;min-height:34px;border:1px solid #d9e2d3;border-radius:5px;background:#fff;color:#426536;font-size:10px;font-weight:600}
+.station-location-button ion-icon{font-size:15px}
+.station-location-button:disabled{opacity:.65}
+.station-coordinates{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+.auth-form .station-location-fields label{min-width:0}
+.station-location-fields input{width:100%;min-width:0}
+@media(max-width:420px){.station-coordinates{grid-template-columns:1fr}}
+.navigation-status{display:grid;gap:9px;margin:3px 0 12px;padding:11px;border:1px solid #dce9d3;border-radius:7px;background:#f5f9f0}
+.navigation-status-heading{display:flex;align-items:center;gap:7px;color:#345331;font-size:10px}
+.navigation-live-dot{width:8px;height:8px;border-radius:50%;background:#65a849;box-shadow:0 0 0 3px #65a84922;animation:navigation-pulse 1.8s ease-out infinite}
+.navigation-distances{display:flex;flex-wrap:wrap;gap:15px}
+.navigation-distances>div{display:grid;gap:3px}
+.navigation-distances small,.navigation-accuracy,.navigation-distance-note{color:#78847c;font-size:9px;line-height:1.4}
+.navigation-distances strong{color:#26372d;font-size:12px}
+.navigation-accuracy,.navigation-distance-note{display:block}
+.navigation-distance-note{color:#929b95}
+.navigation-error{margin:2px 0 9px;color:#b94b36;font-size:10px;line-height:1.5}
+.auth-form select{width:100%;height:40px;padding:0 10px;border:1px solid var(--line);border-radius:6px;background:#fff;color:var(--ink);font-size:12px}
+.auth-form input{width:100%;height:40px;padding:0 10px;border:1px solid var(--line);border-radius:6px;background:#fff;color:var(--ink);font-size:12px}
+.auth-form .vehicle-selector{grid-column:1/-1}
+.vehicle-selector{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.vehicle-selector label{display:grid;gap:6px;min-width:0;color:#58665e;font-size:11px;font-weight:600}
+.vehicle-selector input,.vehicle-selector select{width:100%;min-width:0;height:40px;padding:0 10px;border:1px solid var(--line);border-radius:6px;background:#fff;color:var(--ink);font-size:12px}
+.vehicle-search-field{position:relative;display:block}
+.vehicle-search-options{position:absolute;z-index:20;top:calc(100% + 3px);left:0;right:0;display:grid;max-height:220px;overflow-y:auto;padding:4px;border:1px solid var(--line);border-radius:6px;background:#fff;box-shadow:0 8px 20px #1e30251a}
+.vehicle-search-options button{padding:8px 9px;border:0;border-radius:4px;background:transparent;color:var(--ink);text-align:left;font-size:12px;cursor:pointer}
+.vehicle-search-options button:hover,.vehicle-search-options button[aria-selected="true"]{background:#edf3e6}
+.vehicle-search-empty{position:absolute;z-index:20;top:calc(100% + 3px);left:0;right:0;padding:9px;border:1px solid var(--line);border-radius:6px;background:#fff;color:var(--muted);font-size:10px;box-shadow:0 8px 20px #1e30251a}
+.vehicle-selector-status,.vehicle-selector-disclaimer{grid-column:1/-1;margin:0;color:var(--muted);font-size:10px;line-height:1.5}
+.vehicle-selector-status.is-error{color:#b94b36}
+.vehicle-selector-status strong{color:#405349}
+.user-profile-form .vehicle-selector{grid-column:1/-1}
+@media(max-width:520px){.vehicle-selector{grid-template-columns:1fr}}
+@keyframes navigation-pulse{50%{box-shadow:0 0 0 6px #65a84908}}

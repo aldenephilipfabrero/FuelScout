@@ -1,0 +1,33 @@
+databases:
+  - name: fuelscout-db
+    databaseName: fuelscout
+    user: fuelscout
+    plan: free
+
+services:
+  - type: web
+    name: fuelscout-api
+    runtime: node
+    plan: free
+    buildCommand: npm ci --include=dev && npm run build
+    startCommand: npm run db:schema && npm start
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: fuelscout-db
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true
+      - key: NODE_VERSION
+        value: "22.16.0"
+      - key: CLIENT_ORIGIN
+        value: "https://fuelscout-web.onrender.com,http://localhost,https://localhost,capacitor://localhost"
+
+  - type: web
+    name: fuelscout-web
+    runtime: static
+    buildCommand: npm ci --include=dev && npm run build
+    staticPublishPath: ./dist
+    envVars:
+      - key: VITE_API_URL
+        sync: false
