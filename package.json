@@ -15,6 +15,7 @@
     "android:open": "cap open android",
     "db:schema": "tsx server/apply-schema.ts",
     "admin:create": "tsx server/create-admin.ts",
+    "admin:bootstrap": "tsx server/bootstrap-admin.ts",
     "admin:setup": "powershell -NoProfile -ExecutionPolicy Bypass -File server/setup-admin.ps1",
     "db:seed": "tsx server/seed.ts",
     "db:import-osm": "tsx server/import-osm.ts"

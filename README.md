@@ -80,3 +80,5 @@ npm run android:apk
 ```
 
 The Android APK build requires Android Studio, its SDK, and a compatible JDK installed locally. The API service applies the database schema when it starts. Create any administrator account separately for the deployed database; local accounts are not automatically copied to Render.
+
+To provision an administrator on Render, temporarily set `ADMIN_NAME`, `ADMIN_EMAIL`, and `ADMIN_PASSWORD` on the API service, then deploy. Startup creates or promotes that account in the Render database. After confirming the deployment succeeds, remove all three variables and redeploy; the account remains in the database, and later restarts won't reset its password. Do not commit administrator credentials to the repository.
