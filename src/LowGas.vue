@@ -30,10 +30,7 @@ type Station = { id: number; name: string; brand: string; address: string; latit
 type Account = { id: number; name: string; email: string; role: 'user' | 'station' | 'admin'; stationId?: number; searchRadiusKm?: number; vehicle: VehicleRecord | null; createdAt?: string }
 type ProfileDraft = { name: string; email: string; currentPassword: string; newPassword: string; radiusKm: number }
 type StationCache = { query: string; origin: { latitude: number; longitude: number }; stations: Station[]; viewMode: 'nearby' | 'nationwide'; savedAt: string }
-type PriceWatchSummary = { fuel_type: string; station_count: number; average_price: number; lowest_price: number; highest_price: number; average_change: number | null; rollback_count: number; increase_count: number }
-type PriceWatchRow = { station_id: number; name: string; brand: string; address: string; fuel_type: string; current_price: number; updated_at: string; previous_price: number | null; price_change: number | null; change_at: string | null }
-type NationalFuelAdjustment = { fuelType: string; direction: 'increase' | 'rollback'; low: number; high: number; ytdNetChange: number | null }
-type NationalFuelAdvisory = { title: string; asOf: string; effectivePeriod: string; sourceUrl: string; sourcePage: string; fetchedAt: string; adjustments: NationalFuelAdjustment[] }
+type PriceWatchRow = { station_id: number; name: string; address: string; fuel_type: string; current_price: number }
 
 function migrateLegacyStorage(): void {
   const keys = ['station-cache', 'national-price-cache', 'page', 'token', 'profile']
@@ -62,15 +59,6 @@ function readStationCache(): StationCache | null {
     const parsed = JSON.parse(cached) as StationCache
     if (!Array.isArray(parsed.stations) || !Number.isFinite(parsed.origin?.latitude) || !Number.isFinite(parsed.origin?.longitude)) return null
     return parsed
-  } catch {
-    return null
-  }
-}
-
-function readNationalPriceCache(): NationalFuelAdvisory | null {
-  try {
-    const cached = localStorage.getItem('lowgas-national-price-cache')
-    return cached ? JSON.parse(cached) as NationalFuelAdvisory : null
   } catch {
     return null
   }
@@ -118,13 +106,7 @@ const reportType = ref('Unleaded')
 const reportValue = ref('')
 const profileBusy = ref(false)
 const priceWatchBusy = ref(false)
-const priceWatchFuel = ref('All fuels')
-const priceWatchSummary = ref<PriceWatchSummary[]>([])
-const priceWatchRows = ref<PriceWatchRow[]>([])
 const lowestPriceRows = ref<PriceWatchRow[]>([])
-const nationalFuelAdvisory = ref<NationalFuelAdvisory | null>(readNationalPriceCache())
-const nationalAdvisoryStale = ref(!!nationalFuelAdvisory.value)
-const nationalAdvisoryError = ref('')
 const ownedStation = computed(() => {
   const stationId = Number(account.value?.stationId)
   return stations.value.find((station) => Number(station.id) === stationId) ?? null
@@ -162,13 +144,6 @@ function money(price: number) {
 function formatDate(value?: string) {
   if (!value) return 'time unavailable'
   return new Intl.DateTimeFormat('en-PH', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(value))
-}
-
-function changeLabel(change: number | null) {
-  if (change === null) return 'No previous update'
-  if (change < 0) return `Rollback ${money(Math.abs(change))}`
-  if (change > 0) return `Increase ${money(change)}`
-  return 'No change'
 }
 
 const filteredStations = computed(() => {
@@ -283,29 +258,13 @@ async function loadPriceWatch() {
   localStorage.setItem('lowgas-page', 'price-watch')
   priceWatchBusy.value = true
   try {
-    const query = priceWatchFuel.value === 'All fuels' ? '' : `?fuelType=${encodeURIComponent(priceWatchFuel.value)}`
-    const [stationResult, nationalResult] = await Promise.allSettled([
-      request(`/price-watch${query}`),
-      request('/national-price-watch'),
-    ])
-
-    if (stationResult.status === 'fulfilled') {
-      priceWatchSummary.value = stationResult.value.summary
-      priceWatchRows.value = stationResult.value.prices
-      lowestPriceRows.value = stationResult.value.lowestPrices
-    } else {
-      notice.value = stationResult.reason instanceof Error ? stationResult.reason.message : 'Could not load registered station prices.'
-    }
-
-    if (nationalResult.status === 'fulfilled') {
-      nationalFuelAdvisory.value = nationalResult.value
-      nationalAdvisoryStale.value = false
-      nationalAdvisoryError.value = ''
-      localStorage.setItem('lowgas-national-price-cache', JSON.stringify(nationalResult.value))
-    } else {
-      nationalAdvisoryStale.value = !!nationalFuelAdvisory.value
-      nationalAdvisoryError.value = nationalResult.reason instanceof Error ? nationalResult.reason.message : 'DOE data is temporarily unavailable.'
-    }
+    const result = await request('/price-watch')
+    const fuelOrder = ['Diesel', 'Unleaded', 'Premium']
+    lowestPriceRows.value = result.lowestPrices.sort(
+      (a: PriceWatchRow, b: PriceWatchRow) => fuelOrder.indexOf(a.fuel_type) - fuelOrder.indexOf(b.fuel_type),
+    )
+  } catch (error) {
+    notice.value = error instanceof Error ? error.message : 'Could not load the lowest registered station prices.'
   } finally {
     priceWatchBusy.value = false
   }
@@ -1120,38 +1079,14 @@ onBeforeUnmount(() => {
         <section v-if="activePage === 'price-watch'" class="price-watch-page">
           <div class="price-watch-heading">
             <div>
-              <div class="eyebrow">DOE NATIONAL ADVISORY + REGISTERED STATIONS</div>
+              <div class="eyebrow">LOWEST REGISTERED STATION PRICES</div>
               <h2>Price Watch</h2>
-              <p>National weekly adjustments and registered-station prices use separate sources and are shown in separate sections.</p>
+              <p>Compare the lowest available Diesel, Unleaded, and Premium prices.</p>
             </div>
             <div class="price-watch-actions">
-              <label class="select-wrap"><span>FUEL TYPE</span>
-                <select v-model="priceWatchFuel" @change="loadPriceWatch"><option>All fuels</option><option>Unleaded</option><option>Diesel</option><option>Premium</option></select>
-              </label>
               <button class="location-button" :disabled="priceWatchBusy" @click="loadPriceWatch">{{ priceWatchBusy ? 'Refreshing…' : 'Refresh' }}</button>
             </div>
           </div>
-
-          <section class="national-advisory">
-            <div class="national-advisory-heading">
-              <div>
-                <span class="eyebrow">NATIONAL REFERENCE · DEPARTMENT OF ENERGY</span>
-                <h3>DOE weekly fuel-price adjustment</h3>
-                <p v-if="nationalFuelAdvisory">As of {{ nationalFuelAdvisory.asOf }} · effective {{ nationalFuelAdvisory.effectivePeriod }}</p>
-                <p v-else>{{ nationalAdvisoryError || 'Loading the latest DOE advisory…' }}</p>
-              </div>
-              <a v-if="nationalFuelAdvisory" class="doe-source-link" :href="nationalFuelAdvisory.sourceUrl" target="_blank" rel="noreferrer">Open DOE source ↗</a>
-            </div>
-            <p v-if="nationalFuelAdvisory" class="national-advisory-note">These are nationwide weekly price adjustments, not absolute pump prices. {{ nationalAdvisoryStale ? 'Showing the last saved DOE report because the live source could not refresh.' : 'Prices may differ by station and region.' }}</p>
-            <p v-else class="national-advisory-note">{{ nationalAdvisoryError }}. Check the <a href="https://doe.gov.ph/data-and-prices/liquid-fuels/oil-monitor" target="_blank" rel="noreferrer">DOE Oil Monitor</a>.</p>
-            <div v-if="nationalFuelAdvisory" class="national-adjustment-grid">
-              <article v-for="adjustment in nationalFuelAdvisory.adjustments" :key="adjustment.fuelType" class="national-adjustment-item">
-                <span class="watch-fuel-label">{{ adjustment.fuelType }}</span>
-                <strong :class="adjustment.direction === 'rollback' ? 'rollback' : 'increase'">{{ adjustment.direction === 'rollback' ? 'Rollback' : 'Increase' }} {{ adjustment.low === adjustment.high ? money(adjustment.low) : `${money(adjustment.low)}–${money(adjustment.high)}` }}<small>/L</small></strong>
-                <small>YTD net {{ adjustment.ytdNetChange === null ? 'not stated' : `${money(adjustment.ytdNetChange)}/L` }}</small>
-              </article>
-            </div>
-          </section>
 
           <section class="lowest-price-section">
             <div class="watch-section-heading">
@@ -1175,39 +1110,6 @@ onBeforeUnmount(() => {
             </div>
             <p v-else class="price-watch-empty">No registered station prices are available to compare yet.</p>
           </section>
-
-          <div v-if="priceWatchSummary.length" class="price-watch-summary">
-            <article v-for="summary in priceWatchSummary" :key="summary.fuel_type" class="watch-summary-item">
-              <span class="watch-fuel-label">{{ summary.fuel_type }}</span>
-              <strong>{{ money(summary.average_price) }}</strong>
-              <small>Average · {{ summary.station_count }} stations</small>
-              <small>Range {{ money(summary.lowest_price) }}–{{ money(summary.highest_price) }}</small>
-              <span :class="['watch-change', { rollback: (summary.average_change ?? 0) < 0, increase: (summary.average_change ?? 0) > 0 }]">
-                {{ summary.average_change === null ? 'No price history yet' : `${summary.average_change < 0 ? 'Avg rollback' : summary.average_change > 0 ? 'Avg increase' : 'No average change'} ${money(Math.abs(summary.average_change))}` }}
-              </span>
-            </article>
-          </div>
-
-          <div class="price-watch-section">
-            <div class="watch-section-heading"><div><span class="eyebrow">STATION-OWNER UPDATES</span><h3>Current prices and changes</h3></div></div>
-            <div v-if="priceWatchRows.length" class="watch-table-wrap">
-              <table class="watch-table">
-                <thead><tr><th>Station</th><th>Fuel</th><th>Current / L</th><th>Previous / L</th><th>Change</th><th>Updated</th></tr></thead>
-                <tbody>
-                  <tr v-for="row in priceWatchRows" :key="`${row.station_id}-${row.fuel_type}`">
-                    <td><strong>{{ row.name }}</strong><small>{{ row.brand }} · {{ row.address }}</small></td>
-                    <td>{{ row.fuel_type }}</td>
-                    <td class="watch-current">{{ money(row.current_price) }}</td>
-                    <td>{{ row.previous_price === null ? '—' : money(row.previous_price) }}</td>
-                    <td :class="['watch-change', { rollback: (row.price_change ?? 0) < 0, increase: (row.price_change ?? 0) > 0 }]">{{ changeLabel(row.price_change) }}</td>
-                    <td>{{ formatDate(row.updated_at) }}</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-            <p v-else class="price-watch-empty">No owner-submitted prices yet. Imported OSM locations do not include prices; station owners must claim a station and enter them.</p>
-          </div>
-
         </section>
 
         <footer class="page-foot">
