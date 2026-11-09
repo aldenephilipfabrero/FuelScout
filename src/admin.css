@@ -38,8 +38,8 @@
 .admin-role-tag{display:inline-block;padding:4px 7px;border-radius:10px;background:#eff2ed;color:#59665e;font-size:9px;text-transform:capitalize}
 .admin-role-tag.role-admin{background:#e8f2d8;color:#345331}
 .admin-role-tag.role-station{background:#e8effb;color:#3978bc}
-.admin-row-actions{display:flex;gap:5px}
-.admin-row-actions button{width:28px;height:28px;display:grid;place-items:center;border:1px solid var(--line);border-radius:5px;background:#fff;color:#53645a}
+.admin-row-actions{display:flex;align-items:center;gap:5px}
+.admin-row-actions button{display:flex;align-items:center;justify-content:center;gap:5px;padding:6px 8px;border:1px solid var(--line);border-radius:5px;background:#fff;color:#53645a;font:600 9px 'DM Sans',sans-serif;white-space:nowrap}
 .admin-row-actions button:hover{background:#f3f7ec}
 .admin-row-actions button:last-child:hover{background:#fff0ec;color:#b94b36}
 .admin-row-actions ion-icon{font-size:14px}

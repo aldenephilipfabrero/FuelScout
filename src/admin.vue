@@ -271,7 +271,7 @@ onMounted(loadAdminData)
               <td><strong>{{ user.name }}</strong><small>{{ user.email }} · #{{ user.id }}</small></td>
               <td><span class="admin-role-tag" :class="`role-${user.role}`">{{ user.role }}</span></td>
               <td>{{ user.station_name || '—' }}</td><td>{{ user.report_count }}</td><td>{{ formatDate(user.created_at) }}</td>
-              <td class="admin-row-actions"><button aria-label="Edit account" @click="beginAdminUserEdit(user)"><ion-icon :icon="createOutline" /></button><button v-if="user.role !== 'admin'" aria-label="Delete account" @click="deleteAdminRecord('users', user.id, `account ${user.email}`)"><ion-icon :icon="trashOutline" /></button></td>
+              <td class="admin-row-actions"><button aria-label="Edit account" @click="beginAdminUserEdit(user)"><ion-icon :icon="createOutline" />Edit</button><button v-if="user.role !== 'admin'" aria-label="Delete account" @click="deleteAdminRecord('users', user.id, `account ${user.email}`)"><ion-icon :icon="trashOutline" />Delete</button></td>
             </tr>
             <tr v-if="adminUsers.length === 0"><td colspan="6" class="admin-empty">No matching accounts.</td></tr>
           </tbody>
@@ -286,7 +286,7 @@ onMounted(loadAdminData)
               <td><strong>{{ station.name }}</strong><small>{{ station.brand }} · #{{ station.id }}</small></td>
               <td>{{ station.address }}<small>{{ Number(station.latitude).toFixed(4) }}, {{ Number(station.longitude).toFixed(4) }}</small></td>
               <td>{{ station.owner_name || 'Unclaimed' }}<small>{{ station.owner_email || '' }}</small></td><td>{{ station.price_count }}</td><td>{{ station.report_count }}</td>
-              <td class="admin-row-actions"><button aria-label="Edit station" @click="beginAdminStationEdit(station)"><ion-icon :icon="createOutline" /></button><button aria-label="Delete station" @click="deleteAdminRecord('stations', station.id, `station ${station.name}`)"><ion-icon :icon="trashOutline" /></button></td>
+              <td class="admin-row-actions"><button aria-label="Edit station" @click="beginAdminStationEdit(station)"><ion-icon :icon="createOutline" />Edit</button><button aria-label="Delete station" @click="deleteAdminRecord('stations', station.id, `station ${station.name}`)"><ion-icon :icon="trashOutline" />Delete</button></td>
             </tr>
             <tr v-if="adminStations.length === 0"><td colspan="6" class="admin-empty">No matching stations.</td></tr>
           </tbody>
@@ -320,7 +320,7 @@ onMounted(loadAdminData)
               <td><strong>{{ price.station_name }}</strong><small>{{ price.brand }} · {{ price.owner_name || 'No linked owner' }}</small></td><td>{{ price.fuel_type }}</td><td><strong>{{ money(Number(price.price)) }}</strong></td><td>{{ price.previous_price === null ? '—' : money(Number(price.previous_price)) }}</td>
               <td>{{ price.changed_price === null || price.previous_price === null ? 'No change recorded' : `${Number(price.changed_price) < Number(price.previous_price) ? 'Rollback' : 'Change'} ${money(Math.abs(Number(price.changed_price) - Number(price.previous_price)))}` }}<small>{{ price.change_at ? `by ${price.editor_name || 'former user'}` : '' }}</small></td>
               <td>{{ price.source }}<small>{{ formatDate(price.updated_at) }}</small></td>
-              <td class="admin-row-actions"><button aria-label="Edit fuel price" @click="beginAdminPriceEdit(price)"><ion-icon :icon="createOutline" /></button><button aria-label="Delete fuel price" @click="deleteAdminRecord('prices', price.id, `${price.fuel_type} price at ${price.station_name}`)"><ion-icon :icon="trashOutline" /></button></td>
+              <td class="admin-row-actions"><button aria-label="Edit fuel price" @click="beginAdminPriceEdit(price)"><ion-icon :icon="createOutline" />Edit</button><button aria-label="Delete fuel price" @click="deleteAdminRecord('prices', price.id, `${price.fuel_type} price at ${price.station_name}`)"><ion-icon :icon="trashOutline" />Delete</button></td>
             </tr>
             <tr v-if="adminPrices.length === 0"><td colspan="7" class="admin-empty">No current prices in the database.</td></tr>
           </tbody>
@@ -333,7 +333,7 @@ onMounted(loadAdminData)
           <tbody>
             <tr v-for="report in adminReports" :key="report.id">
               <td><strong>{{ report.station_name }}</strong><small>{{ report.brand }} · {{ report.address }}</small></td><td>{{ report.fuel_type }}</td><td><strong>{{ money(Number(report.price)) }}</strong></td><td>{{ report.reporter_name }}<small>{{ report.reporter_email }}</small></td><td>{{ formatDate(report.created_at) }}</td>
-              <td class="admin-row-actions"><button aria-label="Delete community report" @click="deleteAdminRecord('reports', report.id, `report #${report.id}`)"><ion-icon :icon="trashOutline" /></button></td>
+              <td class="admin-row-actions"><button aria-label="Delete community report" @click="deleteAdminRecord('reports', report.id, `report #${report.id}`)"><ion-icon :icon="trashOutline" />Delete</button></td>
             </tr>
             <tr v-if="adminReports.length === 0"><td colspan="6" class="admin-empty">No matching community reports.</td></tr>
           </tbody>
