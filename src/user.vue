@@ -303,7 +303,7 @@ onBeforeUnmount(() => {
             <div><span class="eyebrow">PERSONAL FINANCES</span><h3>Fuel expense record</h3></div>
           </div>
           <p v-if="expenseMessage" class="user-profile-message" :class="{ 'is-error': expenseMessageError }" role="status">{{ expenseMessage }}</p>
-          <form class="user-expense-form" @submit.prevent="addExpense">
+          <form class="user-expense-form" autocomplete="off" @submit.prevent="addExpense">
             <label>Fuel type
               <select v-model="expenseFuelType" required>
                 <option>Unleaded</option><option>Diesel</option><option>Premium</option>
@@ -353,7 +353,7 @@ onBeforeUnmount(() => {
         <button class="user-edit-button" type="button" @click="nameInput?.focus()"><ion-icon :icon="createOutline" /> Edit details</button>
       </div>
       <p v-if="message" class="user-profile-message" :class="{ 'is-error': messageError }" role="status">{{ message }}</p>
-      <form class="user-profile-form" @submit.prevent="saveProfile">
+      <form class="user-profile-form" autocomplete="off" @submit.prevent="saveProfile">
         <label>Name<input ref="nameInput" v-model="name" id="user-profile-name" autocomplete="name" required /></label>
         <label>Email<input v-model="email" type="email" autocomplete="email" required /></label>
         <label>Search radius (km)<input v-model.number="radiusKm" type="number" min="5" max="200" step="5" required /></label>

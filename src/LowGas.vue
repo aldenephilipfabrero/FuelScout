@@ -14,7 +14,6 @@ import VehicleSelector from './components/VehicleSelector.vue'
 import type { VehicleRecord } from './types/vehicle'
 import {
   addOutline,
-  arrowBackOutline,
   businessOutline,
   createOutline,
   locateOutline,
@@ -84,7 +83,7 @@ const activePage = ref<AppPage>(localStorage.getItem('lowgas-page') === 'price-w
 const stations = ref<Station[]>(startupCache?.stations ?? sampleStations)
 const selected = ref<Station | null>(startupCache?.stations[0] ?? sampleStations[0]!)
 const nationwideMode = ref(startupCache?.viewMode === 'nationwide')
-const searchText = ref(startupCache?.query ?? '')
+const searchText = ref('')
 const fuelFilter = ref('All fuels')
 const sortMode = ref('Nearest')
 const account = ref<Account | null>(null)
@@ -106,8 +105,8 @@ const authPassword = ref('')
 const signupVehicle = ref<VehicleRecord | null>(null)
 const stationName = ref('')
 const stationAddress = ref('')
-const stationLatitude = ref('14.5668')
-const stationLongitude = ref('121.0457')
+const stationLatitude = ref('')
+const stationLongitude = ref('')
 const priceType = ref('Unleaded')
 const priceValue = ref('')
 const editingFuelType = ref<string | null>(null)
@@ -124,6 +123,10 @@ const priceWatchRows = ref<PriceWatchRow[]>([])
 const nationalFuelAdvisory = ref<NationalFuelAdvisory | null>(readNationalPriceCache())
 const nationalAdvisoryStale = ref(!!nationalFuelAdvisory.value)
 const nationalAdvisoryError = ref('')
+const ownedStation = computed(() => {
+  const stationId = Number(account.value?.stationId)
+  return stations.value.find((station) => Number(station.id) === stationId) ?? null
+})
 
 let map: L.Map | null = null
 let markerLayer: L.MarkerClusterGroup | null = null
@@ -223,6 +226,24 @@ function openProfileSettings() {
     radiusKm: Number(saved.radiusKm || 25),
   }
   settingsOpen.value = true
+}
+
+function resetTransientInputs() {
+  searchText.value = ''
+  authError.value = ''
+  authName.value = ''
+  authEmail.value = ''
+  authPassword.value = ''
+  stationName.value = ''
+  stationAddress.value = ''
+  stationLatitude.value = ''
+  stationLongitude.value = ''
+  signupVehicle.value = null
+  priceValue.value = ''
+  editingFuelType.value = null
+  reportValue.value = ''
+  reportOpen.value = false
+  profileDraft.value = { name: '', email: '', currentPassword: '', newPassword: '', radiusKm: 25 }
 }
 
 async function saveProfileSettings() {
@@ -642,16 +663,47 @@ function updateUserAccount(payload: { account: Account; token: string }) {
 }
 
 function toggleAuthMode() {
+  resetTransientInputs()
   authMode.value = authMode.value === 'login' ? 'register' : 'login'
   authError.value = ''
   if (authMode.value === 'register' && authRole.value === 'admin') authRole.value = 'user'
-  if (authMode.value === 'register') signupVehicle.value = null
 }
 
 function chooseAuthRole(role: 'user' | 'station' | 'admin') {
+  resetTransientInputs()
   authRole.value = role
   authError.value = ''
-  if (role === 'user' && authMode.value === 'register') signupVehicle.value = null
+}
+
+function openOwnedStation() {
+  const station = ownedStation.value
+  if (!station) {
+    notice.value = 'Your station listing could not be found. Please sign in again or contact an administrator.'
+    return
+  }
+  selected.value = station
+  activePage.value = 'stations'
+  void nextTick(() => {
+    map?.invalidateSize()
+    map?.setView([station.latitude, station.longitude], 15, { animate: true })
+    updateMap()
+  })
+}
+
+function manageOwnedPrice(price?: FuelPrice) {
+  const station = ownedStation.value
+  if (!station) {
+    notice.value = 'Your station listing could not be found. Please sign in again or contact an administrator.'
+    return
+  }
+  selected.value = station
+  if (price) editPrice(price)
+  activePage.value = 'stations'
+  void nextTick(() => {
+    map?.invalidateSize()
+    map?.setView([station.latitude, station.longitude], 15, { animate: true })
+    updateMap()
+  })
 }
 
 async function claimStation() {
@@ -717,6 +769,9 @@ function signOut() {
   localStorage.removeItem('lowgas-token')
   activePage.value = 'stations'
   settingsOpen.value = false
+  resetTransientInputs()
+  authMode.value = 'login'
+  authRole.value = 'user'
   notice.value = 'Signed out.'
 }
 
@@ -795,6 +850,7 @@ async function initializeAuthenticatedApp() {
 }
 
 onMounted(async () => {
+  resetTransientInputs()
   const saved = getStoredProfile()
   if (saved.radiusKm) profileDraft.value.radiusKm = Number(saved.radiusKm)
   if (!token.value) return
@@ -857,40 +913,52 @@ onBeforeUnmount(() => {
           @account-updated="updateUserAccount"
           @navigate="(page) => page === 'stations' ? showStations() : loadPriceWatch()"
         />
-        <section v-else-if="activePage === 'station-dashboard' && account?.role === 'station'" class="user-page">
-          <header class="user-heading">
+        <section v-else-if="activePage === 'station-dashboard' && account?.role === 'station'" class="station-owner-page">
+          <header class="station-owner-heading">
             <div>
-              <div class="eyebrow">STATION OWNER ACCOUNT</div>
+              <div class="eyebrow">STATION OWNER WORKSPACE</div>
               <h2>Welcome, {{ account.name }}</h2>
-              <p>Manage your station details and keep its fuel prices current.</p>
+              <p>Manage your public listing and keep customers’ fuel prices up to date.</p>
             </div>
-            <span class="user-dashboard-avatar">{{ account.name.trim().charAt(0).toUpperCase() || 'S' }}</span>
+            <button class="station-owner-settings" @click="openProfileSettings"><ion-icon :icon="settingsOutline" /> Account settings</button>
           </header>
-          <div class="user-welcome-card">
-            <div class="user-welcome-mark"><ion-icon :icon="businessOutline" /></div>
-            <div>
-              <span class="eyebrow">YOUR STATION</span>
-              <h3>{{ selected?.name || 'Station details unavailable' }}</h3>
-              <p>{{ selected?.address || 'Please sign in again or contact an administrator to check your station record.' }}</p>
+          <section class="station-owner-hero">
+            <div class="station-owner-hero-icon"><ion-icon :icon="businessOutline" /></div>
+            <div class="station-owner-hero-copy">
+              <span class="eyebrow">YOUR PUBLIC LISTING</span>
+              <h3>{{ ownedStation?.name || 'Station listing unavailable' }}</h3>
+              <p>{{ ownedStation?.address || 'Please sign in again or contact an administrator to check your station record.' }}</p>
             </div>
+            <span :class="['station-owner-status', { 'is-unavailable': !ownedStation }]">{{ ownedStation ? 'LISTING ACTIVE' : 'NEEDS ATTENTION' }}</span>
+          </section>
+          <div class="station-owner-stats">
+            <article><span>Fuel types listed</span><strong>{{ ownedStation?.prices.length ?? 0 }}</strong><small>Prices customers can compare</small></article>
+            <article><span>Listing status</span><strong>{{ ownedStation ? 'Active' : 'Unavailable' }}</strong><small>{{ ownedStation ? 'Visible on the station map' : 'Check your station account' }}</small></article>
+            <article><span>Account role</span><strong>Station owner</strong><small>Manage only your linked station</small></article>
           </div>
-          <div class="user-dashboard-grid">
-            <article class="user-info-card">
-              <div class="user-card-heading"><ion-icon :icon="businessOutline" /><h3>Station information</h3></div>
+          <div class="station-owner-grid">
+            <article class="station-owner-card">
+              <div class="station-owner-card-heading"><div><span class="eyebrow">BUSINESS PROFILE</span><h3>Station details</h3></div><ion-icon :icon="businessOutline" /></div>
               <dl>
                 <div><dt>Owner</dt><dd>{{ account.name }}</dd></div>
                 <div><dt>Email</dt><dd>{{ account.email }}</dd></div>
-                <div><dt>Station</dt><dd>{{ selected?.name || 'Not linked' }}</dd></div>
-                <div><dt>Brand</dt><dd>{{ selected?.brand || '—' }}</dd></div>
-                <div><dt>Current fuel prices</dt><dd>{{ selected?.prices.length ?? 0 }}</dd></div>
+                <div><dt>Station</dt><dd>{{ ownedStation?.name || 'Not linked' }}</dd></div>
+                <div><dt>Brand</dt><dd>{{ ownedStation?.brand || '—' }}</dd></div>
+                <div><dt>Address</dt><dd>{{ ownedStation?.address || '—' }}</dd></div>
               </dl>
-              <button class="user-text-button" @click="openProfileSettings">Edit account details <ion-icon :icon="settingsOutline" /></button>
+              <button class="station-owner-primary" :disabled="!ownedStation" @click="openOwnedStation"><ion-icon :icon="searchOutline" /> View station on map</button>
             </article>
-            <article class="user-shortcuts-card">
-              <span class="eyebrow">QUICK ACTIONS</span>
-              <h3>Manage your station</h3>
-              <button @click="showStations"><span class="user-shortcut-icon"><ion-icon :icon="pricetagOutline" /></span><span><strong>Update fuel prices</strong><small>Save changes to the live station listing</small></span><ion-icon :icon="arrowBackOutline" /></button>
-              <button @click="showStations"><span class="user-shortcut-icon"><ion-icon :icon="searchOutline" /></span><span><strong>View station on the map</strong><small>Check the public listing and location</small></span><ion-icon :icon="arrowBackOutline" /></button>
+            <article class="station-owner-card">
+              <div class="station-owner-card-heading"><div><span class="eyebrow">CUSTOMER PRICING</span><h3>Current fuel prices</h3></div><ion-icon :icon="pricetagOutline" /></div>
+              <div v-if="ownedStation?.prices.length" class="station-owner-prices">
+                <div v-for="price in ownedStation.prices" :key="price.fuelType" class="station-owner-price-row">
+                  <span><strong>{{ price.fuelType }}</strong><small>Updated {{ formatDate(price.updatedAt) }}</small></span>
+                  <strong>{{ money(price.price) }}<small> / liter</small></strong>
+                  <button :aria-label="`Edit ${price.fuelType} price`" @click="manageOwnedPrice(price)"><ion-icon :icon="createOutline" /> Edit</button>
+                </div>
+              </div>
+              <div v-else class="station-owner-empty"><ion-icon :icon="pricetagOutline" /><p>No owner-managed prices yet.</p><small>Add prices so drivers can compare your station.</small></div>
+              <button class="station-owner-primary" :disabled="!ownedStation" @click="manageOwnedPrice()"><ion-icon :icon="createOutline" /> Manage prices</button>
             </article>
           </div>
         </section>
@@ -898,7 +966,7 @@ onBeforeUnmount(() => {
         <section v-show="activePage === 'stations'" class="search-strip">
           <label class="search-box">
             <ion-icon :icon="searchOutline" />
-            <input v-model="searchText" placeholder="Search city, municipality, or province" aria-label="Search location" />
+            <input v-model="searchText" autocomplete="off" placeholder="Search city, municipality, or province" aria-label="Search location" />
           </label>
           <button class="location-button" :disabled="busy" @click="searchLocation">
             <ion-icon :icon="locateOutline" />{{ busy ? 'Searching…' : 'Search' }}
@@ -987,7 +1055,7 @@ onBeforeUnmount(() => {
                 </div>
               </div>
 
-              <form v-if="account?.role === 'station' && Number(account.stationId) === Number(selected.id)" class="price-editor" @submit.prevent="savePrice">
+              <form v-if="account?.role === 'station' && Number(account.stationId) === Number(selected.id)" class="price-editor" autocomplete="off" @submit.prevent="savePrice">
                 <select v-model="priceType" :disabled="!!editingFuelType" aria-label="Fuel type">
                   <option>Unleaded</option>
                   <option>Diesel</option>
@@ -1000,7 +1068,7 @@ onBeforeUnmount(() => {
 
               <button v-if="account?.role === 'station' && Number(account.stationId) !== Number(selected.id) && selected.sourceRef && !selected.sourceRef.startsWith('sample:')" class="directions-button" :disabled="busy" @click="claimStation">{{ busy ? 'Claiming…' : 'Claim this station' }}</button>
               <button class="directions-button" @click="openPriceReport">{{ reportOpen ? 'Cancel report' : 'Report a price' }}</button>
-              <form v-if="reportOpen" class="price-editor" @submit.prevent="submitPriceReport">
+              <form v-if="reportOpen" class="price-editor" autocomplete="off" @submit.prevent="submitPriceReport">
                 <select v-model="reportType" aria-label="Reported fuel type">
                   <option>Unleaded</option>
                   <option>Diesel</option>
@@ -1099,7 +1167,7 @@ onBeforeUnmount(() => {
           <div class="eyebrow">PROFILE SETTINGS</div>
           <h2 id="settings-title">Manage your account</h2>
           <div class="profile-account-info"><span>{{ account?.role === 'station' ? 'Station owner' : 'Driver account' }}</span><small>Member since {{ formatDate(account?.createdAt) }}</small></div>
-          <form class="auth-form" @submit.prevent="saveProfileSettings">
+          <form class="auth-form" autocomplete="off" @submit.prevent="saveProfileSettings">
             <label>Name<input v-model="profileDraft.name" required /></label>
             <label>Email<input v-model="profileDraft.email" type="email" required /></label>
             <label>Current password<input v-model="profileDraft.currentPassword" type="password" autocomplete="current-password" :required="!!profileDraft.newPassword" /></label>
@@ -1128,10 +1196,10 @@ onBeforeUnmount(() => {
           <button v-if="authMode === 'login'" :class="{ chosen: authRole === 'admin' }" @click="chooseAuthRole('admin')">Admin</button>
         </div>
 
-        <form class="auth-form" @submit.prevent="submitAuth">
-          <label v-if="authMode === 'register'">{{ authRole === 'station' ? 'Owner name' : 'Your name' }}<input v-model="authName" autocomplete="name" required /></label>
-          <label>Email address<input v-model="authEmail" type="email" autocomplete="email" required /></label>
-          <label>Password<input v-model="authPassword" type="password" minlength="8" :autocomplete="authMode === 'login' ? 'current-password' : 'new-password'" required /></label>
+        <form class="auth-form" autocomplete="off" @submit.prevent="submitAuth">
+          <label v-if="authMode === 'register'">{{ authRole === 'station' ? 'Owner name' : 'Your name' }}<input v-model="authName" autocomplete="off" required /></label>
+          <label>Email address<input v-model="authEmail" type="email" autocomplete="off" required /></label>
+          <label>Password<input v-model="authPassword" type="password" minlength="8" autocomplete="new-password" required /></label>
 
           <template v-if="authMode === 'register' && authRole === 'station'">
             <label>Station name<input v-model="stationName" required /></label>

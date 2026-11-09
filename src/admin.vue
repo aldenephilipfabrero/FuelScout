@@ -228,7 +228,7 @@ onMounted(loadAdminData)
           <p>{{ adminTab === 'reports' ? 'Review and remove inappropriate or outdated submissions.' : 'Search records stored in PostgreSQL.' }}</p>
         </div>
         <div class="admin-search-tools">
-          <label><ion-icon :icon="searchOutline" /><input v-model="adminSearch" :placeholder="`Search ${adminTab}…`" @keydown.enter="loadAdminData" /></label>
+          <label><ion-icon :icon="searchOutline" /><input v-model="adminSearch" autocomplete="off" :placeholder="`Search ${adminTab}…`" @keydown.enter="loadAdminData" /></label>
           <button class="location-button" :disabled="adminBusy" @click="loadAdminData">Search</button>
           <button v-if="adminTab === 'prices'" class="admin-add-button" @click="beginAdminPriceEdit()"><ion-icon :icon="addOutline" /> Add price</button>
         </div>
@@ -301,7 +301,7 @@ onMounted(loadAdminData)
       <div class="modal-mark"><ion-icon :icon="adminEditTarget.kind === 'user' ? peopleOutline : adminEditTarget.kind === 'station' ? businessOutline : pricetagOutline" /></div>
       <div class="eyebrow">POSTGRESQL DATA</div>
       <h2 id="admin-edit-title">{{ adminEditTarget.kind === 'user' ? 'Edit account' : adminEditTarget.kind === 'station' ? 'Edit station' : 'Manage fuel price' }}</h2>
-      <form class="auth-form" @submit.prevent="saveAdminEdit">
+      <form class="auth-form" autocomplete="off" @submit.prevent="saveAdminEdit">
         <template v-if="adminEditTarget.kind === 'user'">
           <label>Name<input v-model="adminEditDraft.name" autocomplete="name" required /></label>
           <label>Email<input v-model="adminEditDraft.email" type="email" autocomplete="email" required /></label>
