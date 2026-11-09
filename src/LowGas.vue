@@ -584,6 +584,14 @@ async function submitAuth() {
         }
 
     const result = await request(path, { method: 'POST', body: JSON.stringify(payload) })
+    if (
+      typeof result.token !== 'string' ||
+      typeof result.account?.name !== 'string' ||
+      typeof result.account?.email !== 'string'
+    ) {
+      throw new Error('The server did not return a valid account session. If you were registering, try signing in in case your account was created.')
+    }
+
     token.value = result.token
     account.value = result.account
     localStorage.setItem('lowgas-token', result.token)

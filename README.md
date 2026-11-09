@@ -74,12 +74,12 @@ The Android application ID is `com.lowgas.app`. Android treats this as a separat
 
 The `render.yaml` Blueprint defines a PostgreSQL database, an Express API, and a static web app. To deploy it, push this project to a Git provider, then create a new Blueprint in Render from that repository and review the services before confirming. The source is not uploaded by these local setup steps; deploying through Render will make the repository available to that provider.
 
-The renamed Blueprint resources use new LowGas service/database names. If you already have a FuelScout deployment, back up and migrate its PostgreSQL data before switching; changing the Blueprint resource names does not transfer existing database contents.
+The LowGas web app uses the existing API and database resources so current accounts and station data remain available. The API allows requests from both the LowGas and legacy web origins.
 
-When Render prompts for the `VITE_API_URL` value, enter the API service's HTTPS URL followed by `/api`, for example `https://lowgas-api.onrender.com/api`. This value is used when building both the website and APK. After the first deployment, use that same URL when building the APK:
+The Blueprint configures `VITE_API_URL` to use the existing API at `https://fuelscout-api.onrender.com/api`; the app itself is branded LowGas. Use that API URL when building the APK:
 
 ```powershell
-$env:VITE_API_URL = 'https://YOUR-API-SERVICE.onrender.com/api'
+$env:VITE_API_URL = 'https://fuelscout-api.onrender.com/api'
 npm run android:apk
 ```
 

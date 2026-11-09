@@ -16,7 +16,11 @@ const jwtSecret = process.env.JWT_SECRET
 if (!jwtSecret || jwtSecret.length < 32) throw new Error('Set JWT_SECRET to a random value of at least 32 characters.')
 
 export const pool = new Pool({ connectionString: process.env.DATABASE_URL })
-app.use(cors({ origin: process.env.CLIENT_ORIGIN?.split(',') || true }))
+const clientOrigins = new Set([
+  ...(process.env.CLIENT_ORIGIN?.split(',').map((origin) => origin.trim()).filter(Boolean) ?? []),
+  'https://lowgas-web.onrender.com',
+])
+app.use(cors({ origin: process.env.CLIENT_ORIGIN ? [...clientOrigins] : true }))
 app.use(express.json({ limit: '32kb' }))
 
 type Role = 'user' | 'station' | 'admin'
