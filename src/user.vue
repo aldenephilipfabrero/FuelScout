@@ -29,7 +29,7 @@ const emit = defineEmits<{
   navigate: [page: 'stations' | 'price-watch']
 }>()
 
-const apiBase = import.meta.env.VITE_API_URL || '/api'
+const apiBase = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? '/api' : 'https://fuelscout-api.onrender.com/api')
 const activeTab = ref<UserTab>(props.startTab)
 const name = ref(props.account.name)
 const email = ref(props.account.email)

@@ -26,7 +26,7 @@ type AdminEdit = { kind: 'user'; id: number } | { kind: 'station'; id: number } 
 type AdminEditDraft = { name: string; email: string; brand: string; address: string; latitude: string; longitude: string; stationId: string; fuelType: string; price: string }
 
 const props = defineProps<{ token: string }>()
-const apiBase = import.meta.env.VITE_API_URL || '/api'
+const apiBase = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? '/api' : 'https://fuelscout-api.onrender.com/api')
 const adminTab = ref<AdminTab>('overview')
 const adminBusy = ref(false)
 const adminSearch = ref('')

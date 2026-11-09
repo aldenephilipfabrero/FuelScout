@@ -6,7 +6,7 @@ import type { EpaVehicleDetails, VehicleCatalogOption, VehicleCategory, VehicleR
 const props = defineProps<{ modelValue: VehicleRecord | null }>()
 const emit = defineEmits<{ 'update:modelValue': [value: VehicleRecord | null] }>()
 
-const apiBase = import.meta.env.VITE_API_URL || '/api'
+const apiBase = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? '/api' : 'https://fuelscout-api.onrender.com/api')
 const years = ref<number[]>([])
 const makes = ref<string[]>([])
 const models = ref<string[]>([])

@@ -65,7 +65,7 @@ function readStationCache(): StationCache | null {
 }
 
 const startupCache = readStationCache()
-const apiBase = import.meta.env.VITE_API_URL || '/api'
+const apiBase = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? '/api' : 'https://fuelscout-api.onrender.com/api')
 type AppPage = 'stations' | 'price-watch' | 'user-dashboard' | 'user-profile' | 'station-dashboard' | 'admin'
 const activePage = ref<AppPage>(localStorage.getItem('lowgas-page') === 'price-watch' ? 'price-watch' : 'stations')
 const stations = ref<Station[]>(startupCache?.stations ?? sampleStations)
