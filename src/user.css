@@ -113,6 +113,20 @@
 .user-record-heading{display:flex;align-items:center;justify-content:space-between;gap:12px}
 .user-record-heading .eyebrow{display:block;margin-bottom:4px}
 .user-record-heading h3{margin:0;color:var(--ink);font:600 15px 'Space Grotesk',sans-serif}
+.user-monthly-expense{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:14px 0 0;padding:16px;border-radius:8px;background:#173e35;color:#fff}
+.user-monthly-expense>div{display:grid;gap:4px}
+.user-monthly-expense .eyebrow{color:#b4c9bd;font-size:9px}
+.user-monthly-expense strong{font:600 24px 'Space Grotesk',sans-serif}
+.user-monthly-expense small{color:#d2ddd7;font-size:10px}
+.user-monthly-count{flex:none;padding:6px 9px;border-radius:16px;background:#c8f36b;color:#173e35;font-size:9px;font-weight:700}
+.user-monthly-history{margin-top:15px}
+.user-monthly-history h4{margin:0 0 7px;color:var(--ink);font-size:11px}
+.user-monthly-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+.user-monthly-row{display:grid;grid-template-columns:1fr auto;gap:3px 8px;padding:8px 9px;border:1px solid #eef0eb;border-radius:6px}
+.user-monthly-row.current{border-color:#b9cf9d;background:#f5f8f0}
+.user-monthly-row>span{color:#58665e;font-size:9px;font-weight:600}
+.user-monthly-row>small{color:var(--muted);font-size:8px}
+.user-monthly-row>strong{grid-column:2;grid-row:1/3;align-self:center;color:var(--ink);font-size:11px}
 .user-expense-form{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));align-items:end;gap:12px;padding:15px 0}
 .user-expense-form label{display:flex;flex-direction:column;gap:6px;color:#58665e;font-size:10px;font-weight:600}
 .user-expense-form input,.user-expense-form select{width:100%;height:38px;padding:0 10px;border:1px solid var(--line);border-radius:6px;background:#fff;color:var(--ink);font-size:11px}

@@ -15,6 +15,7 @@ import type { VehicleRecord } from './types/vehicle'
 type UserAccount = { id: number; name: string; email: string; role: 'user' | 'station' | 'admin'; searchRadiusKm?: number; vehicle: VehicleRecord | null; createdAt?: string }
 type UserTab = 'overview' | 'profile'
 type FuelExpense = { id: number; fuel_type: string; liters: number; price_per_liter: number; total_cost: number; station_name: string | null; purchased_at: string; created_at: string }
+type MonthlyExpenseTotal = { month: string; total_cost: number; liters: number; transaction_count: number }
 type PriceNotification = { id: number; type: 'price_increase' | 'price_rollback'; station_name: string; fuel_type: string; previous_price: number; new_price: number; created_at: string; read_at: string | null }
 
 const props = defineProps<{
@@ -42,6 +43,10 @@ const message = ref('')
 const messageError = ref(false)
 const initials = computed(() => props.account.name.trim().charAt(0).toUpperCase() || 'U')
 const expenses = ref<FuelExpense[]>([])
+const monthlyExpenseTotals = ref<MonthlyExpenseTotal[]>([])
+const currentExpenseMonth = localDateInput().slice(0, 7)
+const currentMonthTotal = computed(() => monthlyExpenseTotals.value.find((month) => month.month === currentExpenseMonth)?.total_cost ?? 0)
+const currentMonthTransactions = computed(() => monthlyExpenseTotals.value.find((month) => month.month === currentExpenseMonth)?.transaction_count ?? 0)
 const notifications = ref<PriceNotification[]>([])
 const unreadCount = ref(0)
 const expenseFuelType = ref('Unleaded')
@@ -73,6 +78,18 @@ function money(value: number) {
   return `₱${value.toFixed(2)}`
 }
 
+function formatExpenseMonth(value: string) {
+  return new Intl.DateTimeFormat('en-PH', { month: 'long', year: 'numeric' }).format(new Date(`${value}-01T00:00:00`))
+}
+
+function adjustMonthlyExpenseTotal(record: FuelExpense, direction: 1 | -1) {
+  const month = monthlyExpenseTotals.value.find((item) => item.month === record.purchased_at.slice(0, 7))
+  if (!month) return
+  month.total_cost = Number((month.total_cost + direction * record.total_cost).toFixed(2))
+  month.liters = Number((month.liters + direction * record.liters).toFixed(2))
+  month.transaction_count = Math.max(0, month.transaction_count + direction)
+}
+
 async function loadAccountData() {
   try {
     const headers = { Authorization: `Bearer ${props.token}` }
@@ -85,6 +102,7 @@ async function loadAccountData() {
     if (!expenseResponse.ok) throw new Error(expenseResult.error || 'Could not load your financial records.')
     if (!notificationResponse.ok) throw new Error(notificationResult.error || 'Could not load your notifications.')
     expenses.value = expenseResult.records
+    monthlyExpenseTotals.value = expenseResult.monthlyTotals
     notifications.value = notificationResult.notifications
     unreadCount.value = notificationResult.unreadCount
   } catch (error) {
@@ -127,6 +145,7 @@ async function addExpense() {
     const result = await response.json().catch(() => ({}))
     if (!response.ok) throw new Error(result.error || 'Could not save your financial record.')
     expenses.value = [result.record, ...expenses.value]
+    adjustMonthlyExpenseTotal(result.record, 1)
     expenseLiters.value = null
     expensePricePerLiter.value = null
     expenseStation.value = ''
@@ -150,6 +169,7 @@ async function deleteExpense(record: FuelExpense) {
     const result = await response.json().catch(() => ({}))
     if (!response.ok) throw new Error(result.error || 'Could not delete the financial record.')
     expenses.value = expenses.value.filter((item) => item.id !== record.id)
+    adjustMonthlyExpenseTotal(record, -1)
     expenseMessage.value = 'Financial record deleted.'
     expenseMessageError.value = false
   } catch (error) {
@@ -300,9 +320,23 @@ onBeforeUnmount(() => {
       <div class="user-dashboard-records">
         <article class="user-record-card">
           <div class="user-record-heading">
-            <div><span class="eyebrow">PERSONAL FINANCES</span><h3>Fuel expense record</h3></div>
+            <div><span class="eyebrow">PERSONAL FINANCES</span><h3>Fuel transactions</h3></div>
           </div>
           <p v-if="expenseMessage" class="user-profile-message" :class="{ 'is-error': expenseMessageError }" role="status">{{ expenseMessage }}</p>
+          <section class="user-monthly-expense" aria-label="Fuel cost this month">
+            <div><span class="eyebrow">{{ formatExpenseMonth(currentExpenseMonth) }}</span><strong>{{ money(currentMonthTotal) }}</strong><small>Fuel cost this month</small></div>
+            <span class="user-monthly-count">{{ currentMonthTransactions }} {{ currentMonthTransactions === 1 ? 'transaction' : 'transactions' }}</span>
+          </section>
+          <section class="user-monthly-history" aria-label="Monthly fuel cost for the last 12 months">
+            <h4>Monthly fuel costs</h4>
+            <div class="user-monthly-list">
+              <div v-for="month in monthlyExpenseTotals" :key="month.month" class="user-monthly-row" :class="{ current: month.month === currentExpenseMonth }">
+                <span>{{ formatExpenseMonth(month.month) }}</span>
+                <small>{{ month.transaction_count }} {{ month.transaction_count === 1 ? 'fill-up' : 'fill-ups' }} · {{ month.liters.toFixed(2) }} L</small>
+                <strong>{{ money(month.total_cost) }}</strong>
+              </div>
+            </div>
+          </section>
           <form class="user-expense-form" autocomplete="off" @submit.prevent="addExpense">
             <label>Fuel type
               <select v-model="expenseFuelType" required>

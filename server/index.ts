@@ -708,7 +708,32 @@ app.get('/api/user/financial-records', authRequired, async (req, res, next) => {
       FROM user_fuel_expenses WHERE user_id = $1
       ORDER BY purchased_at DESC, id DESC LIMIT 200
     `, [auth.id])
-    res.json({ records: rows })
+    const { rows: monthlyTotals } = await pool.query(`
+      WITH months AS (
+        SELECT generate_series(
+          date_trunc('month', CURRENT_DATE) - interval '11 months',
+          date_trunc('month', CURRENT_DATE),
+          interval '1 month'
+        )::date AS month_start
+      ), totals AS (
+        SELECT date_trunc('month', purchased_at)::date AS month_start,
+          sum(liters * price_per_liter)::numeric(12, 2)::float8 AS total_cost,
+          sum(liters)::float8 AS liters,
+          count(*)::int AS transaction_count
+        FROM user_fuel_expenses
+        WHERE user_id = $1
+          AND purchased_at >= date_trunc('month', CURRENT_DATE) - interval '11 months'
+          AND purchased_at < date_trunc('month', CURRENT_DATE) + interval '1 month'
+        GROUP BY date_trunc('month', purchased_at)::date
+      )
+      SELECT to_char(months.month_start, 'YYYY-MM') AS month,
+        coalesce(totals.total_cost, 0)::float8 AS total_cost,
+        coalesce(totals.liters, 0)::float8 AS liters,
+        coalesce(totals.transaction_count, 0)::int AS transaction_count
+      FROM months LEFT JOIN totals USING (month_start)
+      ORDER BY months.month_start DESC
+    `, [auth.id])
+    res.json({ records: rows, monthlyTotals })
   } catch (error) { next(error) }
 })
 

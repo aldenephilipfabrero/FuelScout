@@ -46,7 +46,7 @@ At sign-in, choose Driver, Station owner, or Admin; the API verifies that the se
 
 Price Watch shows only the lowest current owner-managed price and station for Diesel, Unleaded, and Premium; select a card to open that station on the map. It does not show average prices or a list of all station prices. Driver accounts receive a persistent in-app notification for each registered-station price increase or rollback. Community submissions and seeded demo prices are excluded. Without station-owner submissions, no current market price is available; OSM does not provide fuel prices.
 
-The driver dashboard also lets each account keep a personal fuel-expense log with fuel type, liters, price per liter, purchase date, and optional station name. Expense records are private to the account that created them and can be deleted from the dashboard.
+The driver dashboard also lets each account log fuel transactions with fuel type, liters, price per liter, purchase date, and optional station name. It shows the current month's total fuel cost and a 12-month cost, liters, and fill-up summary. Transaction records are private to the account that created them and can be deleted from the dashboard.
 
 ## Administrator dashboard
 
