@@ -1,5 +1,5 @@
 import { createApp } from 'vue'
-import { IonicVue } from '@ionic/vue'
+import { IonicVue, IonIcon } from '@ionic/vue'
 import './app.css'
 import './controls.css'
 import './auth-gate.css'
@@ -10,4 +10,4 @@ import '@ionic/vue/css/typography.css'
 import './mobile.css'
 import App from './App.vue'
 
-createApp(App).use(IonicVue).mount('#app')
+createApp(App).use(IonicVue).component('ion-icon', IonIcon).mount('#app')
