@@ -13,11 +13,13 @@ import {
   trashOutline,
 } from 'ionicons/icons'
 import './admin.css'
+import './admin-applications.css'
 
-type AdminTab = 'overview' | 'users' | 'stations' | 'prices' | 'reports'
-type AdminOverview = { total_users: number; drivers: number; station_owners: number; admins: number; stations: number; current_prices: number; price_changes: number; community_reports: number; reports_this_week: number }
+type AdminTab = 'overview' | 'users' | 'stations' | 'applications' | 'prices' | 'reports'
+type AdminOverview = { total_users: number; drivers: number; station_owners: number; admins: number; pending_station_applications: number; stations: number; current_prices: number; price_changes: number; community_reports: number; reports_this_week: number }
 type AdminUser = { id: number; name: string; email: string; role: string; created_at: string; station_id: number | null; station_name: string | null; report_count: number }
 type AdminStation = { id: number; name: string; brand: string; address: string; latitude: number; longitude: number; created_at: string; source_ref: string | null; owner_id: number | null; owner_name: string | null; owner_email: string | null; price_count: number; report_count: number }
+type StationApplication = { id: number; owner_name: string; email: string; station_name: string; address: string; latitude: number; longitude: number; submitted_at: string }
 type AdminPrice = { id: number; station_id: number; station_name: string; brand: string; address: string; owner_name: string | null; fuel_type: string; price: number; source: string; updated_at: string; previous_price: number | null; changed_price: number | null; change_at: string | null; editor_name: string | null }
 type AdminReport = { id: number; station_id: number; station_name: string; brand: string; address: string; user_id: number; reporter_name: string; reporter_email: string; fuel_type: string; price: number; created_at: string }
 type AdminEdit = { kind: 'user'; id: number } | { kind: 'station'; id: number } | { kind: 'price' }
@@ -33,6 +35,7 @@ const adminNoticeError = ref(false)
 const adminOverview = ref<AdminOverview | null>(null)
 const adminUsers = ref<AdminUser[]>([])
 const adminStations = ref<AdminStation[]>([])
+const stationApplications = ref<StationApplication[]>([])
 const adminPrices = ref<AdminPrice[]>([])
 const adminReports = ref<AdminReport[]>([])
 const adminEditTarget = ref<AdminEdit | null>(null)
@@ -74,11 +77,14 @@ async function loadAdminData() {
       ? Promise.resolve(null)
       : adminTab.value === 'prices'
         ? Promise.all([request(`/admin/prices${query}`), request('/admin/stations')])
-        : request(`/admin/${adminTab.value}${query}`)
+        : adminTab.value === 'applications'
+          ? request(`/admin/station-applications${query}`)
+          : request(`/admin/${adminTab.value}${query}`)
     const [overviewResult, dataResult] = await Promise.all([overviewRequest, dataRequest])
     adminOverview.value = overviewResult.overview
     if (adminTab.value === 'users') adminUsers.value = dataResult.users
     if (adminTab.value === 'stations') adminStations.value = dataResult.stations
+    if (adminTab.value === 'applications') stationApplications.value = dataResult.applications
     if (adminTab.value === 'prices') {
       adminPrices.value = dataResult[0].prices
       adminStations.value = dataResult[1].stations
@@ -178,6 +184,25 @@ async function deleteAdminRecord(kind: 'users' | 'stations' | 'prices' | 'report
   }
 }
 
+async function reviewStationApplication(application: StationApplication, action: 'approve' | 'reject') {
+  const actionLabel = action === 'approve' ? 'approve' : 'reject'
+  if (!window.confirm(`${actionLabel[0]!.toUpperCase()}${actionLabel.slice(1)} station application for ${application.station_name}?`)) return
+  adminBusy.value = true
+  try {
+    const path = `/admin/station-applications/${application.id}`
+    await request(action === 'approve' ? `${path}/approve` : path, { method: action === 'approve' ? 'POST' : 'DELETE' })
+    await loadAdminData()
+    if (!adminNoticeError.value) adminNotice.value = action === 'approve'
+      ? `${application.station_name} approved. The owner account and station listing are now active.`
+      : `Application for ${application.station_name} rejected.`
+  } catch (error) {
+    adminNotice.value = error instanceof Error ? error.message : `Could not ${actionLabel} this station application.`
+    adminNoticeError.value = true
+  } finally {
+    adminBusy.value = false
+  }
+}
+
 onMounted(loadAdminData)
 </script>
 
@@ -194,10 +219,11 @@ onMounted(loadAdminData)
     <p v-if="adminNotice" class="admin-notice" :class="{ 'is-error': adminNoticeError }" role="status">{{ adminNotice }}</p>
 
     <nav class="admin-tabs" aria-label="Admin sections">
-      <button v-for="tab in (['overview', 'users', 'stations', 'prices', 'reports'] as const)" :key="tab" :class="{ active: adminTab === tab }" @click="selectTab(tab)">
+      <button v-for="tab in (['overview', 'users', 'stations', 'applications', 'prices', 'reports'] as const)" :key="tab" :class="{ active: adminTab === tab }" @click="selectTab(tab)">
         <ion-icon :icon="tab === 'overview' ? shieldCheckmarkOutline : tab === 'users' ? peopleOutline : tab === 'stations' ? businessOutline : tab === 'prices' ? pricetagOutline : documentTextOutline" />
-        {{ tab === 'users' ? 'Accounts' : tab === 'reports' ? 'Reports' : tab[0]!.toUpperCase() + tab.slice(1) }}
+        {{ tab === 'users' ? 'Accounts' : tab === 'reports' ? 'Reports' : tab === 'applications' ? 'Applications' : tab[0]!.toUpperCase() + tab.slice(1) }}
         <span v-if="tab === 'reports' && adminOverview">{{ adminOverview.community_reports }}</span>
+        <span v-if="tab === 'applications' && adminOverview">{{ adminOverview.pending_station_applications }}</span>
       </button>
     </nav>
 
@@ -205,6 +231,7 @@ onMounted(loadAdminData)
       <div v-if="adminBusy && !adminOverview" class="admin-loading">Loading system data…</div>
       <div v-else-if="adminOverview" class="admin-stat-grid">
         <article class="admin-stat-card"><span><ion-icon :icon="peopleOutline" /> ACCOUNTS</span><strong>{{ adminOverview.total_users.toLocaleString() }}</strong><small>{{ adminOverview.drivers }} drivers · {{ adminOverview.station_owners }} station owners · {{ adminOverview.admins }} admins</small></article>
+        <article class="admin-stat-card"><span><ion-icon :icon="documentTextOutline" /> PENDING APPLICATIONS</span><strong>{{ adminOverview.pending_station_applications.toLocaleString() }}</strong><small>Station accounts waiting for approval</small></article>
         <article class="admin-stat-card"><span><ion-icon :icon="businessOutline" /> STATIONS</span><strong>{{ adminOverview.stations.toLocaleString() }}</strong><small>Registered and imported station records</small></article>
         <article class="admin-stat-card"><span><ion-icon :icon="pricetagOutline" /> CURRENT PRICES</span><strong>{{ adminOverview.current_prices.toLocaleString() }}</strong><small>{{ adminOverview.price_changes.toLocaleString() }} price changes recorded</small></article>
         <article class="admin-stat-card"><span><ion-icon :icon="documentTextOutline" /> COMMUNITY REPORTS</span><strong>{{ adminOverview.community_reports.toLocaleString() }}</strong><small>{{ adminOverview.reports_this_week }} submitted in the last 7 days</small></article>
@@ -215,6 +242,7 @@ onMounted(loadAdminData)
         <div>
           <button @click="selectTab('users')"><ion-icon :icon="peopleOutline" /> Manage accounts</button>
           <button @click="selectTab('stations')"><ion-icon :icon="businessOutline" /> Manage stations</button>
+          <button @click="selectTab('applications')"><ion-icon :icon="documentTextOutline" /> Review station applications</button>
           <button @click="selectTab('prices')"><ion-icon :icon="pricetagOutline" /> Manage prices</button>
           <button @click="selectTab('reports')"><ion-icon :icon="documentTextOutline" /> Review reports</button>
         </div>
@@ -224,8 +252,8 @@ onMounted(loadAdminData)
     <template v-else>
       <div class="admin-list-toolbar">
         <div>
-          <h3>{{ adminTab === 'users' ? 'Accounts' : adminTab === 'stations' ? 'Stations' : adminTab === 'prices' ? 'Current fuel prices' : 'Community reports' }}</h3>
-          <p>{{ adminTab === 'reports' ? 'Review and remove inappropriate or outdated submissions.' : 'Search records stored in PostgreSQL.' }}</p>
+          <h3>{{ adminTab === 'users' ? 'Accounts' : adminTab === 'stations' ? 'Stations' : adminTab === 'applications' ? 'Station applications' : adminTab === 'prices' ? 'Current fuel prices' : 'Community reports' }}</h3>
+          <p>{{ adminTab === 'reports' ? 'Review and remove inappropriate or outdated submissions.' : adminTab === 'applications' ? 'Approve an application to create its owner account and publish the station, or reject it.' : 'Search records stored in PostgreSQL.' }}</p>
         </div>
         <div class="admin-search-tools">
           <label><ion-icon :icon="searchOutline" /><input v-model="adminSearch" autocomplete="off" :placeholder="`Search ${adminTab}…`" @keydown.enter="loadAdminData" /></label>
@@ -261,6 +289,25 @@ onMounted(loadAdminData)
               <td class="admin-row-actions"><button aria-label="Edit station" @click="beginAdminStationEdit(station)"><ion-icon :icon="createOutline" /></button><button aria-label="Delete station" @click="deleteAdminRecord('stations', station.id, `station ${station.name}`)"><ion-icon :icon="trashOutline" /></button></td>
             </tr>
             <tr v-if="adminStations.length === 0"><td colspan="6" class="admin-empty">No matching stations.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div v-else-if="adminTab === 'applications'" class="admin-table-wrap">
+        <table class="admin-table">
+          <thead><tr><th>Applicant</th><th>Station</th><th>Address and coordinates</th><th>Submitted</th><th>Review</th></tr></thead>
+          <tbody>
+            <tr v-for="application in stationApplications" :key="application.id">
+              <td><strong>{{ application.owner_name }}</strong><small>{{ application.email }}</small></td>
+              <td><strong>{{ application.station_name }}</strong><small>Application #{{ application.id }}</small></td>
+              <td>{{ application.address }}<small>{{ Number(application.latitude).toFixed(5) }}, {{ Number(application.longitude).toFixed(5) }}</small></td>
+              <td>{{ formatDate(application.submitted_at) }}</td>
+              <td class="admin-application-actions">
+                <button class="admin-approve-button" :disabled="adminBusy" @click="reviewStationApplication(application, 'approve')">Approve</button>
+                <button class="admin-reject-button" :disabled="adminBusy" @click="reviewStationApplication(application, 'reject')">Reject</button>
+              </td>
+            </tr>
+            <tr v-if="stationApplications.length === 0"><td colspan="5" class="admin-empty">No station applications are waiting for review.</td></tr>
           </tbody>
         </table>
       </div>

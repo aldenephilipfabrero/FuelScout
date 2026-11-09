@@ -538,7 +538,33 @@ app.post('/api/auth/register', async (req, res, next) => {
   const client = await pool.connect()
   try {
     await client.query('BEGIN')
+    await client.query('SELECT pg_advisory_xact_lock(hashtext(lower($1)))', [email.trim()])
+    const { rows: existingUsers } = await client.query('SELECT 1 FROM users WHERE email = lower($1)', [email.trim()])
+    if (existingUsers.length) {
+      await client.query('ROLLBACK')
+      return res.status(409).json({ error: 'An account with this email already exists.' })
+    }
+    const { rows: pendingApplications } = await client.query(
+      'SELECT 1 FROM station_applications WHERE lower(email) = lower($1) AND status = \'pending\'',
+      [email.trim()],
+    )
+    if (pendingApplications.length) {
+      await client.query('ROLLBACK')
+      return res.status(409).json({ error: 'A station application with this email is already awaiting review.' })
+    }
     const passwordHash = await bcrypt.hash(password, 12)
+    if (role === 'station') {
+      await client.query(
+        `INSERT INTO station_applications (owner_name, email, password_hash, station_name, address, latitude, longitude)
+         VALUES ($1, lower($2), $3, $4, $5, $6, $7)`,
+        [name.trim(), email.trim(), passwordHash, stationName.trim(), address.trim(), Number(latitude), Number(longitude)],
+      )
+      await client.query('COMMIT')
+      return res.status(202).json({
+        applicationPending: true,
+        message: 'Your station application was submitted. You can sign in as a station owner after an administrator approves it.',
+      })
+    }
     const userResult = await client.query(
       `INSERT INTO users (name, email, password_hash, role, vehicle_category, vehicle_type, vehicle_make, vehicle_model, vehicle_variant, vehicle_version, vehicle_year, vehicle_fuel_type, vehicle_economy_km_l, vehicle_epa_id)
        VALUES ($1, lower($2), $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
@@ -547,13 +573,6 @@ app.post('/api/auth/register', async (req, res, next) => {
     )
     const user = userResult.rows[0]
     let stationId: number | null = null
-    if (role === 'station') {
-      const stationResult = await client.query(
-        'INSERT INTO stations (owner_id, name, brand, address, latitude, longitude) VALUES ($1, $2, $2, $3, $4, $5) RETURNING id',
-        [user.id, stationName.trim(), address.trim(), Number(latitude), Number(longitude)],
-      )
-      stationId = stationResult.rows[0].id
-    }
     await client.query('COMMIT')
     const account = { id: user.id, name: user.name, email: user.email, role: user.role, stationId, searchRadiusKm: 25, vehicle: savedVehicle, createdAt: user.created_at }
     const token = jwt.sign({ sub: user.id, name: user.name, email: user.email, role: user.role, stationId }, jwtSecret!, { expiresIn: '7d' })
@@ -571,7 +590,17 @@ app.post('/api/auth/login', async (req, res, next) => {
     }
     const { rows } = await pool.query('SELECT id, name, email, role, password_hash, search_radius_km, vehicle_category, vehicle_epa_id, vehicle_make, vehicle_model, vehicle_type, vehicle_variant, vehicle_version, vehicle_year, vehicle_fuel_type, vehicle_economy_km_l, created_at FROM users WHERE email = lower($1)', [email.trim()])
     const user = rows[0]
-    if (!user || !await bcrypt.compare(password, user.password_hash)) return res.status(401).json({ error: 'Email or password is incorrect.' })
+    if (!user) {
+      const { rows: applications } = await pool.query(
+        'SELECT password_hash FROM station_applications WHERE lower(email) = lower($1) AND status = \'pending\'',
+        [email.trim()],
+      )
+      if (applications[0]?.password_hash && await bcrypt.compare(password, applications[0].password_hash)) {
+        return res.status(403).json({ error: 'Your station application is waiting for administrator approval. You can sign in after it is approved.' })
+      }
+      return res.status(401).json({ error: 'Email or password is incorrect.' })
+    }
+    if (!await bcrypt.compare(password, user.password_hash)) return res.status(401).json({ error: 'Email or password is incorrect.' })
     if (accountType && user.role !== accountType) {
       const accountLabel = user.role === 'admin' ? 'administrator' : user.role === 'station' ? 'station owner' : 'driver'
       return res.status(403).json({ error: `This account is registered as a ${accountLabel}. Select the matching account type.` })
@@ -781,6 +810,7 @@ app.get('/api/admin/overview', authRequired, adminRequired, async (_req, res, ne
         (SELECT count(*)::int FROM users WHERE role = 'user') AS drivers,
         (SELECT count(*)::int FROM users WHERE role = 'station') AS station_owners,
         (SELECT count(*)::int FROM users WHERE role = 'admin') AS admins,
+        (SELECT count(*)::int FROM station_applications WHERE status = 'pending') AS pending_station_applications,
         (SELECT count(*)::int FROM stations) AS stations,
         (SELECT count(*)::int FROM fuel_prices WHERE source = 'station') AS current_prices,
         (SELECT count(*)::int FROM fuel_price_history) AS price_changes,
@@ -788,6 +818,83 @@ app.get('/api/admin/overview', authRequired, adminRequired, async (_req, res, ne
         (SELECT count(*)::int FROM fuel_price_reports WHERE created_at > now() - interval '7 days') AS reports_this_week
     `)
     res.json({ overview: rows[0] })
+  } catch (error) { next(error) }
+})
+
+app.get('/api/admin/station-applications', authRequired, adminRequired, async (req, res, next) => {
+  try {
+    const search = typeof req.query.search === 'string' ? `%${req.query.search.trim()}%` : null
+    const { rows } = await pool.query(`
+      SELECT id, owner_name, email, station_name, address, latitude, longitude, submitted_at
+      FROM station_applications
+      WHERE status = 'pending'
+        AND ($1::text IS NULL OR owner_name ILIKE $1 OR email ILIKE $1 OR station_name ILIKE $1 OR address ILIKE $1)
+      ORDER BY submitted_at ASC LIMIT 500
+    `, [search])
+    res.json({ applications: rows })
+  } catch (error) { next(error) }
+})
+
+app.post('/api/admin/station-applications/:id/approve', authRequired, adminRequired, async (req, res, next) => {
+  const id = Number(req.params.id)
+  if (!Number.isSafeInteger(id) || id <= 0) return res.status(400).json({ error: 'Application ID is invalid.' })
+  const client = await pool.connect()
+  try {
+    await client.query('BEGIN')
+    const { rows } = await client.query(
+      'SELECT id, owner_name, email, password_hash, station_name, address, latitude, longitude FROM station_applications WHERE id = $1 AND status = \'pending\' FOR UPDATE',
+      [id],
+    )
+    const application = rows[0]
+    if (!application || !application.password_hash) {
+      await client.query('ROLLBACK')
+      return res.status(404).json({ error: 'Pending station application not found.' })
+    }
+
+    await client.query('SELECT pg_advisory_xact_lock(hashtext(lower($1)))', [application.email])
+    const { rows: existingUsers } = await client.query('SELECT 1 FROM users WHERE email = lower($1)', [application.email])
+    if (existingUsers.length) {
+      await client.query('ROLLBACK')
+      return res.status(409).json({ error: 'An account already uses this email. Resolve the duplicate before approving this application.' })
+    }
+
+    const { rows: userRows } = await client.query(
+      `INSERT INTO users (name, email, password_hash, role)
+       VALUES ($1, lower($2), $3, 'station')
+       RETURNING id, name, email, role, created_at`,
+      [application.owner_name, application.email, application.password_hash],
+    )
+    const user = userRows[0]
+    const { rows: stationRows } = await client.query(
+      `INSERT INTO stations (owner_id, name, brand, address, latitude, longitude)
+       VALUES ($1, $2, $2, $3, $4, $5) RETURNING id`,
+      [user.id, application.station_name, application.address, application.latitude, application.longitude],
+    )
+    await client.query(
+      'UPDATE station_applications SET status = \'approved\', password_hash = NULL, reviewed_at = now() WHERE id = $1',
+      [id],
+    )
+    await client.query('COMMIT')
+    res.json({ approvedId: id, stationId: Number(stationRows[0].id), ownerEmail: user.email })
+  } catch (error) {
+    await client.query('ROLLBACK')
+    next(error)
+  } finally {
+    client.release()
+  }
+})
+
+app.delete('/api/admin/station-applications/:id', authRequired, adminRequired, async (req, res, next) => {
+  const id = Number(req.params.id)
+  if (!Number.isSafeInteger(id) || id <= 0) return res.status(400).json({ error: 'Application ID is invalid.' })
+  try {
+    const { rows } = await pool.query(
+      `UPDATE station_applications SET status = 'rejected', password_hash = NULL, reviewed_at = now()
+       WHERE id = $1 AND status = 'pending' RETURNING id`,
+      [id],
+    )
+    if (!rows[0]) return res.status(404).json({ error: 'Pending station application not found.' })
+    res.json({ rejectedId: Number(rows[0].id) })
   } catch (error) { next(error) }
 })
 
@@ -1052,6 +1159,19 @@ app.get('/api/stations', authRequired, async (req, res, next) => {
   } catch (error) { next(error) }
 })
 
+app.get('/api/stations/:id', authRequired, async (req, res, next) => {
+  const id = Number(req.params.id)
+  const latitude = Number(req.query.lat ?? 14.5668)
+  const longitude = Number(req.query.lng ?? 121.0457)
+  if (!Number.isSafeInteger(id) || id <= 0) return res.status(400).json({ error: 'Station ID is invalid.' })
+  if (!validCoordinates(latitude, longitude)) return res.status(400).json({ error: 'Choose a valid location.' })
+  try {
+    const station = await getStation(id, latitude, longitude)
+    if (!station) return res.status(404).json({ error: 'Station not found.' })
+    res.json({ station })
+  } catch (error) { next(error) }
+})
+
 app.get('/api/national-price-watch', authRequired, async (_req, res, next) => {
   try {
     res.json(await getNationalFuelAdvisory())
@@ -1103,7 +1223,16 @@ app.get('/api/price-watch', authRequired, async (req, res, next) => {
       WHERE fp.source = 'station' AND ($1::text IS NULL OR fp.fuel_type = $1)
       ORDER BY fp.updated_at DESC LIMIT 250
     `, [fuelType])
-    res.json({ summary, prices })
+    const { rows: lowestPrices } = await pool.query(`
+      SELECT DISTINCT ON (fp.fuel_type)
+        s.id AS station_id, s.name, s.brand, s.address,
+        fp.fuel_type, fp.price::float8 AS current_price, fp.updated_at
+      FROM fuel_prices fp
+      JOIN stations s ON s.id = fp.station_id
+      WHERE fp.source = 'station' AND ($1::text IS NULL OR fp.fuel_type = $1)
+      ORDER BY fp.fuel_type, fp.price ASC, fp.updated_at DESC, s.id
+    `, [fuelType])
+    res.json({ summary, prices, lowestPrices })
   } catch (error) { next(error) }
 })
 

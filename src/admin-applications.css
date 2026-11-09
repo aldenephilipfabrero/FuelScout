@@ -1,0 +1,7 @@
+.admin-stat-grid{grid-template-columns:repeat(auto-fit,minmax(170px,1fr))}
+.admin-application-actions{display:flex;align-items:center;gap:6px}
+.admin-application-actions button{min-height:29px;padding:0 9px;border:1px solid transparent;border-radius:5px;font-size:9px;font-weight:700}
+.admin-approve-button{background:#e8f2d8;color:#345331}
+.admin-reject-button{border-color:var(--line)!important;background:#fff;color:#9e3f2e}
+.admin-application-actions button:disabled{opacity:.55;cursor:wait}
+@media(max-width:760px){.admin-application-actions{flex-wrap:wrap}}

@@ -50,6 +50,19 @@
 .user-profile-form input:focus{border-color:#72905b;box-shadow:0 0 0 2px #72905b22}
 .user-password-fields{grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr;gap:14px}
 .user-profile-form .submit-button{grid-column:1/-1;justify-self:start;min-width:140px}
+.auth-application-note{margin:-3px 0 0;padding:9px 10px;border-radius:5px;background:#edf5e8;color:#426536;font-size:10px;line-height:1.5}
+.lowest-price-section{display:grid;gap:10px}
+.lowest-price-section .watch-section-heading>small{color:var(--muted);font-size:10px}
+.lowest-price-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.lowest-price-card{display:flex;flex-direction:column;align-items:flex-start;gap:6px;min-width:0;padding:15px 16px;border:1px solid var(--line);border-radius:8px;background:#fff;text-align:left;transition:border-color .15s,box-shadow .15s,transform .15s}
+.lowest-price-card:hover:not(:disabled){transform:translateY(-2px);border-color:#9bb77c;box-shadow:0 6px 18px #173e3512}
+.lowest-price-card:disabled{opacity:.65;cursor:wait}
+.lowest-price-card>strong{color:var(--ink);font:600 24px 'Space Grotesk',sans-serif}
+.lowest-price-card>strong small{margin-left:3px;color:var(--muted);font:500 11px 'DM Sans',sans-serif}
+.lowest-price-station{color:var(--ink);font-size:11px;font-weight:700}
+.lowest-price-address{color:var(--muted);font-size:9px;line-height:1.4;overflow-wrap:anywhere}
+.lowest-price-link{display:flex;align-items:center;gap:5px;margin-top:3px;color:#426536;font-size:9px;font-weight:700}
+.lowest-price-link ion-icon{font-size:13px}
 .station-owner-page{display:grid;align-content:start;gap:16px;min-width:0;max-height:calc(100vh - 150px);overflow:auto;padding:4px 5px 20px 0}
 .station-owner-heading{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:7px 0 16px;border-bottom:1px solid var(--line)}
 .station-owner-heading h2{margin:5px 0;font:600 24px 'Space Grotesk',sans-serif;color:var(--ink)}
@@ -124,4 +137,4 @@
 .login-role-choice{display:grid;grid-template-columns:repeat(3,minmax(0,1fr))}
 .auth-message{margin:0 0 12px;padding:9px 10px;border-radius:5px;background:#fff0ec;color:#a94533;font-size:10px;line-height:1.5}
 .auth-message:not(.is-error){background:#edf5e8;color:#426536}
-@media(max-width:760px){.user-page{max-height:calc(100dvh - 120px);gap:14px}.user-heading h2{font-size:21px}.user-dashboard-grid{grid-template-columns:1fr}.user-welcome-card{align-items:flex-start;padding:15px}.user-profile-card{padding:15px}.user-profile-form,.user-password-fields,.user-expense-form{grid-template-columns:1fr}.user-password-fields{grid-column:1/-1}.user-profile-form .submit-button{width:100%}.user-edit-button{font-size:0}.user-edit-button ion-icon{font-size:16px}.user-record-card{padding:15px}.user-expense-row{align-items:flex-start;flex-wrap:wrap}.user-expense-row time{margin-left:auto}.user-notification{flex-wrap:wrap}.user-notification .user-mark-read{margin-left:auto}.station-owner-page{max-height:calc(100dvh - 120px);gap:13px}.station-owner-heading{align-items:flex-start;flex-direction:column}.station-owner-heading h2{font-size:21px}.station-owner-settings{align-self:flex-end}.station-owner-hero{align-items:flex-start;flex-wrap:wrap;padding:15px}.station-owner-status{margin-left:auto}.station-owner-stats{grid-template-columns:1fr}.station-owner-grid{grid-template-columns:1fr}}
+@media(max-width:760px){.user-page{max-height:calc(100dvh - 120px);gap:14px}.user-heading h2{font-size:21px}.user-dashboard-grid{grid-template-columns:1fr}.user-welcome-card{align-items:flex-start;padding:15px}.user-profile-card{padding:15px}.user-profile-form,.user-password-fields,.user-expense-form{grid-template-columns:1fr}.user-password-fields{grid-column:1/-1}.user-profile-form .submit-button{width:100%}.user-edit-button{font-size:0}.user-edit-button ion-icon{font-size:16px}.user-record-card{padding:15px}.user-expense-row{align-items:flex-start;flex-wrap:wrap}.user-expense-row time{margin-left:auto}.user-notification{flex-wrap:wrap}.user-notification .user-mark-read{margin-left:auto}.station-owner-page{max-height:calc(100dvh - 120px);gap:13px}.station-owner-heading{align-items:flex-start;flex-direction:column}.station-owner-heading h2{font-size:21px}.station-owner-settings{align-self:flex-end}.station-owner-hero{align-items:flex-start;flex-wrap:wrap;padding:15px}.station-owner-status{margin-left:auto}.station-owner-stats{grid-template-columns:1fr}.station-owner-grid{grid-template-columns:1fr}.lowest-price-grid{grid-template-columns:1fr}.lowest-price-card{display:grid;grid-template-columns:1fr auto;align-items:center;gap:4px 12px}.lowest-price-card>strong{grid-column:2;grid-row:1/3}.lowest-price-address,.lowest-price-link{grid-column:1/-1}}

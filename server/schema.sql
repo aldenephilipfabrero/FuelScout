@@ -53,6 +53,23 @@ END $$;
 ALTER TABLE users DROP CONSTRAINT IF EXISTS users_role_check;
 ALTER TABLE users ADD CONSTRAINT users_role_check CHECK (role IN ('user', 'station', 'admin'));
 
+CREATE TABLE IF NOT EXISTS station_applications (
+  id BIGSERIAL PRIMARY KEY,
+  owner_name TEXT NOT NULL,
+  email TEXT NOT NULL,
+  password_hash TEXT,
+  station_name TEXT NOT NULL,
+  address TEXT NOT NULL,
+  latitude DOUBLE PRECISION NOT NULL CHECK (latitude BETWEEN -90 AND 90),
+  longitude DOUBLE PRECISION NOT NULL CHECK (longitude BETWEEN -180 AND 180),
+  status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'approved', 'rejected')),
+  submitted_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  reviewed_at TIMESTAMPTZ
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS station_applications_pending_email_uidx
+  ON station_applications (lower(email)) WHERE status = 'pending';
+
 CREATE TABLE IF NOT EXISTS stations (
   id BIGSERIAL PRIMARY KEY,
   owner_id BIGINT UNIQUE REFERENCES users(id) ON DELETE CASCADE,

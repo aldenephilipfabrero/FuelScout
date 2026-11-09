@@ -99,6 +99,7 @@ const settingsOpen = ref(false)
 const authMode = ref<'login' | 'register'>('login')
 const authRole = ref<'user' | 'station' | 'admin'>('user')
 const authError = ref('')
+const authSuccess = ref('')
 const authName = ref('')
 const authEmail = ref('')
 const authPassword = ref('')
@@ -120,6 +121,7 @@ const priceWatchBusy = ref(false)
 const priceWatchFuel = ref('All fuels')
 const priceWatchSummary = ref<PriceWatchSummary[]>([])
 const priceWatchRows = ref<PriceWatchRow[]>([])
+const lowestPriceRows = ref<PriceWatchRow[]>([])
 const nationalFuelAdvisory = ref<NationalFuelAdvisory | null>(readNationalPriceCache())
 const nationalAdvisoryStale = ref(!!nationalFuelAdvisory.value)
 const nationalAdvisoryError = ref('')
@@ -231,6 +233,7 @@ function openProfileSettings() {
 function resetTransientInputs() {
   searchText.value = ''
   authError.value = ''
+  authSuccess.value = ''
   authName.value = ''
   authEmail.value = ''
   authPassword.value = ''
@@ -289,6 +292,7 @@ async function loadPriceWatch() {
     if (stationResult.status === 'fulfilled') {
       priceWatchSummary.value = stationResult.value.summary
       priceWatchRows.value = stationResult.value.prices
+      lowestPriceRows.value = stationResult.value.lowestPrices
     } else {
       notice.value = stationResult.reason instanceof Error ? stationResult.reason.message : 'Could not load registered station prices.'
     }
@@ -304,6 +308,27 @@ async function loadPriceWatch() {
     }
   } finally {
     priceWatchBusy.value = false
+  }
+}
+
+async function openPriceStation(row: PriceWatchRow) {
+  busy.value = true
+  try {
+    const result = await request(`/stations/${row.station_id}?lat=${origin.value.latitude}&lng=${origin.value.longitude}`)
+    const station = result.station as Station
+    stations.value = [station, ...stations.value.filter((item) => item.id !== station.id)]
+    selected.value = station
+    nationwideMode.value = false
+    activePage.value = 'stations'
+    await nextTick()
+    map?.invalidateSize()
+    map?.flyTo([station.latitude, station.longitude], Math.max(map.getZoom(), 15), { duration: 0.7 })
+    updateMap()
+    notice.value = `Showing ${station.name}, the lowest listed ${row.fuel_type} price at ${money(row.current_price)} per liter.`
+  } catch (error) {
+    notice.value = error instanceof Error ? error.message : 'Could not open this station on the map.'
+  } finally {
+    busy.value = false
   }
 }
 
@@ -588,6 +613,7 @@ async function showRoute() {
 async function submitAuth() {
   busy.value = true
   authError.value = ''
+  authSuccess.value = ''
   try {
     const path = authMode.value === 'login' ? '/auth/login' : '/auth/register'
     const payload = authMode.value === 'login'
@@ -605,6 +631,13 @@ async function submitAuth() {
         }
 
     const result = await request(path, { method: 'POST', body: JSON.stringify(payload) })
+    if (result.applicationPending) {
+      resetTransientInputs()
+      authMode.value = 'login'
+      authRole.value = 'station'
+      authSuccess.value = result.message || 'Your station application was submitted for administrator review.'
+      return
+    }
     if (
       typeof result.token !== 'string' ||
       typeof result.account?.name !== 'string' ||
@@ -1120,6 +1153,29 @@ onBeforeUnmount(() => {
             </div>
           </section>
 
+          <section class="lowest-price-section">
+            <div class="watch-section-heading">
+              <div><span class="eyebrow">BEST REGISTERED STATION PRICE</span><h3>Lowest price by fuel type</h3></div>
+              <small>Click a station to find it on the map.</small>
+            </div>
+            <div v-if="lowestPriceRows.length" class="lowest-price-grid">
+              <button
+                v-for="row in lowestPriceRows"
+                :key="`${row.station_id}-${row.fuel_type}`"
+                class="lowest-price-card"
+                :disabled="busy"
+                @click="openPriceStation(row)"
+              >
+                <span class="watch-fuel-label">{{ row.fuel_type }}</span>
+                <strong>{{ money(row.current_price) }}<small>/L</small></strong>
+                <span class="lowest-price-station">{{ row.name }}</span>
+                <small class="lowest-price-address">{{ row.address }}</small>
+                <span class="lowest-price-link"><ion-icon :icon="locateOutline" /> View station on map</span>
+              </button>
+            </div>
+            <p v-else class="price-watch-empty">No registered station prices are available to compare yet.</p>
+          </section>
+
           <div v-if="priceWatchSummary.length" class="price-watch-summary">
             <article v-for="summary in priceWatchSummary" :key="summary.fuel_type" class="watch-summary-item">
               <span class="watch-fuel-label">{{ summary.fuel_type }}</span>
@@ -1186,15 +1242,17 @@ onBeforeUnmount(() => {
         <p>Sign in or create an account to find stations, compare fuel prices, and use LowGas’s features.</p>
       </header>
       <section class="auth-gate-card" aria-labelledby="auth-title">
-        <div class="eyebrow">{{ authMode === 'login' ? 'ACCOUNT SIGN IN' : 'JOIN LOWGAS' }}</div>
-        <h2 id="auth-title">{{ authMode === 'login' ? 'Good to see you.' : 'Let’s get started.' }}</h2>
+        <div class="eyebrow">{{ authMode === 'login' ? 'ACCOUNT SIGN IN' : authRole === 'station' ? 'STATION APPLICATION' : 'JOIN LOWGAS' }}</div>
+        <h2 id="auth-title">{{ authMode === 'login' ? 'Good to see you.' : authRole === 'station' ? 'Apply as a station owner.' : 'Let’s get started.' }}</h2>
         <p v-if="authError" class="auth-message is-error" role="alert">{{ authError }}</p>
+        <p v-if="authSuccess" class="auth-message" role="status">{{ authSuccess }}</p>
 
         <div class="role-choice">
           <button :class="{ chosen: authRole === 'user' }" @click="chooseAuthRole('user')">Driver</button>
           <button :class="{ chosen: authRole === 'station' }" @click="chooseAuthRole('station')">Station owner</button>
           <button v-if="authMode === 'login'" :class="{ chosen: authRole === 'admin' }" @click="chooseAuthRole('admin')">Admin</button>
         </div>
+        <p v-if="authMode === 'register' && authRole === 'station'" class="auth-application-note">Station owner accounts and listings are created only after administrator approval.</p>
 
         <form class="auth-form" autocomplete="off" @submit.prevent="submitAuth">
           <label v-if="authMode === 'register'">{{ authRole === 'station' ? 'Owner name' : 'Your name' }}<input v-model="authName" autocomplete="off" required /></label>
@@ -1209,7 +1267,7 @@ onBeforeUnmount(() => {
           </template>
           <VehicleSelector v-if="authMode === 'register' && authRole === 'user'" v-model="signupVehicle" />
 
-          <button class="submit-button" type="submit" :disabled="busy">{{ busy ? 'Please wait…' : authMode === 'login' ? 'Sign in' : 'Create account' }}</button>
+          <button class="submit-button" type="submit" :disabled="busy">{{ busy ? 'Please wait…' : authMode === 'login' ? 'Sign in' : authRole === 'station' ? 'Submit application' : 'Create account' }}</button>
         </form>
 
         <p class="auth-switch">{{ authMode === 'login' ? 'New to LowGas?' : 'Already have an account?' }} <button @click="toggleAuthMode">{{ authMode === 'login' ? 'Create account' : 'Sign in' }}</button></p>
