@@ -185,7 +185,7 @@ onMounted(loadAdminData)
   <section class="admin-page">
     <div class="admin-heading">
       <div>
-        <div class="eyebrow">FUELSCOUT CONTROL CENTER</div>
+        <div class="eyebrow">LOWGAS CONTROL CENTER</div>
         <h2>Administration</h2>
         <p>Manage accounts, station listings, live prices, and community reports.</p>
       </div>

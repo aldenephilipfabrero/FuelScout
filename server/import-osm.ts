@@ -94,7 +94,7 @@ async function main() {
   const pbfPath = resolve(inputPath)
   await access(pbfPath)
 
-  const temporaryDirectory = await mkdtemp(join(tmpdir(), 'fuelscout-osm-'))
+  const temporaryDirectory = await mkdtemp(join(tmpdir(), 'lowgas-osm-'))
   const filteredPath = join(temporaryDirectory, 'fuel-stations.osm.pbf')
   const geoJsonPath = join(temporaryDirectory, 'fuel-stations.geojson')
   const pool = new Pool({ connectionString: process.env.DATABASE_URL })

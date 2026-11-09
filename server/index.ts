@@ -1225,4 +1225,4 @@ app.use((error: Error & { code?: string; statusCode?: number }, _req: Request, r
   res.status(error.statusCode ?? 500).json({ error: error.statusCode ? error.message : 'Something went wrong. Check that the database is configured and try again.' })
 })
 
-app.listen(port, () => console.log(`FuelScout API listening on http://localhost:${port}`))
+app.listen(port, () => console.log(`LowGas API listening on http://localhost:${port}`))

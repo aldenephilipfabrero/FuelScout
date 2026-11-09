@@ -220,7 +220,7 @@ async function saveProfile() {
 
     const nextToken = result.token as string
     const nextAccount = result.account as UserAccount
-    localStorage.setItem('fuelscout-token', nextToken)
+    localStorage.setItem('lowgas-token', nextToken)
     emit('accountUpdated', { account: nextAccount, token: nextToken })
     name.value = nextAccount.name
     email.value = nextAccount.email
@@ -250,7 +250,7 @@ onBeforeUnmount(() => {
   <section class="user-page">
     <header class="user-heading">
       <div>
-        <div class="eyebrow">YOUR FUELSCOUT ACCOUNT</div>
+        <div class="eyebrow">YOUR LOWGAS ACCOUNT</div>
         <h2>{{ activeTab === 'overview' ? `Welcome, ${account.name}` : 'Your profile' }}</h2>
         <p>{{ activeTab === 'overview' ? 'Your account and shortcuts for finding fuel.' : 'View and update your personal account information.' }}</p>
       </div>

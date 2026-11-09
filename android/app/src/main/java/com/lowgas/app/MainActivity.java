@@ -1,4 +1,4 @@
-package com.fuelscout.app;
+package com.lowgas.app;
 
 import com.getcapacitor.BridgeActivity;
 

@@ -1,12 +1,12 @@
 databases:
-  - name: fuelscout-db
-    databaseName: fuelscout
-    user: fuelscout
+  - name: lowgas-db
+    databaseName: lowgas
+    user: lowgas
     plan: free
 
 services:
   - type: web
-    name: fuelscout-api
+    name: lowgas-api
     runtime: node
     plan: free
     buildCommand: npm ci --include=dev && npm run build
@@ -14,17 +14,17 @@ services:
     envVars:
       - key: DATABASE_URL
         fromDatabase:
-          name: fuelscout-db
+          name: lowgas-db
           property: connectionString
       - key: JWT_SECRET
         generateValue: true
       - key: NODE_VERSION
         value: "22.16.0"
       - key: CLIENT_ORIGIN
-        value: "https://fuelscout-web.onrender.com,http://localhost,https://localhost,capacitor://localhost"
+        value: "https://lowgas-web.onrender.com,http://localhost,https://localhost,capacitor://localhost"
 
   - type: web
-    name: fuelscout-web
+    name: lowgas-web
     runtime: static
     buildCommand: npm ci --include=dev && npm run build
     staticPublishPath: ./dist

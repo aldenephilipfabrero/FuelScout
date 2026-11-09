@@ -1,8 +1,8 @@
 import type { CapacitorConfig } from '@capacitor/cli'
 
 const config: CapacitorConfig = {
-  appId: 'com.fuelscout.app',
-  appName: 'FuelScout',
+  appId: 'com.lowgas.app',
+  appName: 'LowGas',
   webDir: 'dist',
 }
 

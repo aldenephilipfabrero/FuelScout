@@ -36,6 +36,19 @@ type PriceWatchRow = { station_id: number; name: string; brand: string; address:
 type NationalFuelAdjustment = { fuelType: string; direction: 'increase' | 'rollback'; low: number; high: number; ytdNetChange: number | null }
 type NationalFuelAdvisory = { title: string; asOf: string; effectivePeriod: string; sourceUrl: string; sourcePage: string; fetchedAt: string; adjustments: NationalFuelAdjustment[] }
 
+function migrateLegacyStorage(): void {
+  const keys = ['station-cache', 'national-price-cache', 'page', 'token', 'profile']
+  for (const key of keys) {
+    const currentKey = `lowgas-${key}`
+    if (localStorage.getItem(currentKey) === null) {
+      const legacyValue = localStorage.getItem(`fuelscout-${key}`)
+      if (legacyValue !== null) localStorage.setItem(currentKey, legacyValue)
+    }
+  }
+}
+
+migrateLegacyStorage()
+
 const sampleStations: Station[] = [
   { id: 1, name: 'Shell EDSA Guadalupe', brand: 'Shell', address: 'EDSA corner P. Burgos St, Makati', latitude: 14.5668, longitude: 121.0457, distanceKm: 1.2, prices: [{ fuelType: 'Unleaded', price: 63.4 }, { fuelType: 'Diesel', price: 58.8 }, { fuelType: 'Premium', price: 66.1 }] },
   { id: 2, name: 'Petron Buendia', brand: 'Petron', address: 'Gil Puyat Avenue, Makati', latitude: 14.5548, longitude: 121.0172, distanceKm: 2.6, prices: [{ fuelType: 'Unleaded', price: 62.9 }, { fuelType: 'Diesel', price: 57.9 }] },
@@ -45,7 +58,7 @@ const sampleStations: Station[] = [
 
 function readStationCache(): StationCache | null {
   try {
-    const cached = localStorage.getItem('fuelscout-station-cache')
+    const cached = localStorage.getItem('lowgas-station-cache')
     if (!cached) return null
     const parsed = JSON.parse(cached) as StationCache
     if (!Array.isArray(parsed.stations) || !Number.isFinite(parsed.origin?.latitude) || !Number.isFinite(parsed.origin?.longitude)) return null
@@ -57,7 +70,7 @@ function readStationCache(): StationCache | null {
 
 function readNationalPriceCache(): NationalFuelAdvisory | null {
   try {
-    const cached = localStorage.getItem('fuelscout-national-price-cache')
+    const cached = localStorage.getItem('lowgas-national-price-cache')
     return cached ? JSON.parse(cached) as NationalFuelAdvisory : null
   } catch {
     return null
@@ -67,7 +80,7 @@ function readNationalPriceCache(): NationalFuelAdvisory | null {
 const startupCache = readStationCache()
 const apiBase = import.meta.env.VITE_API_URL || '/api'
 type AppPage = 'stations' | 'price-watch' | 'user-dashboard' | 'user-profile' | 'station-dashboard' | 'admin'
-const activePage = ref<AppPage>(localStorage.getItem('fuelscout-page') === 'price-watch' ? 'price-watch' : 'stations')
+const activePage = ref<AppPage>(localStorage.getItem('lowgas-page') === 'price-watch' ? 'price-watch' : 'stations')
 const stations = ref<Station[]>(startupCache?.stations ?? sampleStations)
 const selected = ref<Station | null>(startupCache?.stations[0] ?? sampleStations[0]!)
 const nationwideMode = ref(startupCache?.viewMode === 'nationwide')
@@ -75,7 +88,7 @@ const searchText = ref(startupCache?.query ?? '')
 const fuelFilter = ref('All fuels')
 const sortMode = ref('Nearest')
 const account = ref<Account | null>(null)
-const token = ref(localStorage.getItem('fuelscout-token'))
+const token = ref(localStorage.getItem('lowgas-token'))
 const apiOnline = ref(false)
 const busy = ref(false)
 const routeBusy = ref(false)
@@ -127,7 +140,7 @@ function cacheStations() {
       viewMode: nationwideMode.value ? 'nationwide' : 'nearby',
       savedAt: new Date().toISOString(),
     }
-    localStorage.setItem('fuelscout-station-cache', JSON.stringify(cache))
+    localStorage.setItem('lowgas-station-cache', JSON.stringify(cache))
   } catch {
     // Keep the live app usable if browser storage is unavailable or full.
   }
@@ -178,13 +191,13 @@ async function request(path: string, options: RequestInit = {}) {
 }
 
 function getStoredProfile() {
-  const raw = localStorage.getItem('fuelscout-profile')
+  const raw = localStorage.getItem('lowgas-profile')
   if (!raw) return { name: 'Guest', email: '', password: '', radiusKm: 25 }
   try {
     const stored = JSON.parse(raw)
     if (Object.hasOwn(stored, 'password')) {
       delete stored.password
-      localStorage.setItem('fuelscout-profile', JSON.stringify(stored))
+      localStorage.setItem('lowgas-profile', JSON.stringify(stored))
     }
     return { name: stored.name || 'Guest', email: stored.email || '', radiusKm: Number(stored.radiusKm || 25) }
   } catch {
@@ -193,7 +206,7 @@ function getStoredProfile() {
 }
 
 function saveStoredProfile() {
-  localStorage.setItem('fuelscout-profile', JSON.stringify({
+  localStorage.setItem('lowgas-profile', JSON.stringify({
     name: profileDraft.value.name,
     email: profileDraft.value.email,
     radiusKm: profileDraft.value.radiusKm,
@@ -229,7 +242,7 @@ async function saveProfileSettings() {
     account.value = result.account
     token.value = result.token
     profileDraft.value.radiusKm = result.account.searchRadiusKm ?? nextRadius
-    localStorage.setItem('fuelscout-token', result.token)
+    localStorage.setItem('lowgas-token', result.token)
     profileDraft.value = { name: nextName, email: nextEmail, currentPassword: '', newPassword: '', radiusKm: nextRadius }
     saveStoredProfile()
     settingsOpen.value = false
@@ -243,7 +256,7 @@ async function saveProfileSettings() {
 
 async function loadPriceWatch() {
   activePage.value = 'price-watch'
-  localStorage.setItem('fuelscout-page', 'price-watch')
+  localStorage.setItem('lowgas-page', 'price-watch')
   priceWatchBusy.value = true
   try {
     const query = priceWatchFuel.value === 'All fuels' ? '' : `?fuelType=${encodeURIComponent(priceWatchFuel.value)}`
@@ -263,7 +276,7 @@ async function loadPriceWatch() {
       nationalFuelAdvisory.value = nationalResult.value
       nationalAdvisoryStale.value = false
       nationalAdvisoryError.value = ''
-      localStorage.setItem('fuelscout-national-price-cache', JSON.stringify(nationalResult.value))
+      localStorage.setItem('lowgas-national-price-cache', JSON.stringify(nationalResult.value))
     } else {
       nationalAdvisoryStale.value = !!nationalFuelAdvisory.value
       nationalAdvisoryError.value = nationalResult.reason instanceof Error ? nationalResult.reason.message : 'DOE data is temporarily unavailable.'
@@ -275,7 +288,7 @@ async function loadPriceWatch() {
 
 async function showStations() {
   activePage.value = 'stations'
-  localStorage.setItem('fuelscout-page', 'stations')
+  localStorage.setItem('lowgas-page', 'stations')
   if (stations.value.length === 0) {
     if (nationwideMode.value) await loadNationwide()
     else await loadNearby(origin.value.latitude, origin.value.longitude, Number(profileDraft.value.radiusKm || 25))
@@ -331,7 +344,7 @@ async function fetchOverpassStations(latitude: number, longitude: number, radius
     if (!data || !data.elements || !data.elements.length) {
       stations.value = []
       selected.value = null
-      localStorage.removeItem('fuelscout-station-cache')
+      localStorage.removeItem('lowgas-station-cache')
       notice.value = 'No mapped fuel stations found within this search radius.'
       apiOnline.value = false
       updateMap()
@@ -438,8 +451,10 @@ async function locateMe() {
     startLiveLocation()
     map?.flyTo([latitude, longitude], 14, { duration: 0.7 })
     await loadNearby(latitude, longitude, Number(profileDraft.value.radiusKm || 25))
-  } catch {
-    notice.value = 'Location is unavailable. Check browser permission or choose a station on the map.'
+  } catch (error) {
+    notice.value = error instanceof Error
+      ? `Location is unavailable: ${error.message}. Check device location settings or permission, or choose a station on the map.`
+      : 'Location is unavailable. Check device location settings or permission, or choose a station on the map.'
   } finally {
     busy.value = false
   }
@@ -571,7 +586,7 @@ async function submitAuth() {
     const result = await request(path, { method: 'POST', body: JSON.stringify(payload) })
     token.value = result.token
     account.value = result.account
-    localStorage.setItem('fuelscout-token', result.token)
+    localStorage.setItem('lowgas-token', result.token)
     profileDraft.value.name = result.account.name
     profileDraft.value.email = result.account.email
     profileDraft.value.radiusKm = result.account.searchRadiusKm ?? 25
@@ -639,7 +654,7 @@ async function claimStation() {
     const result = await request(`/stations/${station.id}/claim`, { method: 'POST' })
     token.value = result.token
     account.value = result.account
-    localStorage.setItem('fuelscout-token', result.token)
+    localStorage.setItem('lowgas-token', result.token)
     selected.value = result.station
     stations.value = stations.value.map((item) => item.id === station.id ? result.station : item)
     notice.value = `${station.name} is now linked to your station-owner account.`
@@ -691,7 +706,7 @@ function signOut() {
   mapReady.value = false
   token.value = null
   account.value = null
-  localStorage.removeItem('fuelscout-token')
+  localStorage.removeItem('lowgas-token')
   activePage.value = 'stations'
   settingsOpen.value = false
   notice.value = 'Signed out.'
@@ -789,7 +804,7 @@ onBeforeUnmount(() => {
   <ion-app>
     <div v-if="account" class="app-shell">
       <aside class="rail">
-        <a class="brand" href="#" aria-label="FuelScout home"><span class="brand-mark">F</span><span>fuel<span class="brand-light">scout</span></span></a>
+        <a class="brand" href="#" aria-label="LowGas home"><span class="brand-mark">L</span><span>Low<span class="brand-light">Gas</span></span></a>
         <div class="rail-caption">DISCOVER</div>
         <button :class="['rail-link', { active: activePage === 'stations' }]" @click="showStations"><ion-icon :icon="searchOutline" /><span>Find fuel</span></button>
         <button :class="['rail-link', { active: activePage === 'price-watch' }]" @click="loadPriceWatch"><ion-icon :icon="pricetagOutline" /><span>Price watch</span></button>
@@ -816,7 +831,7 @@ onBeforeUnmount(() => {
         <header class="topbar">
           <div>
             <div class="eyebrow">YOUR LOCAL FUEL GUIDE</div>
-            <h1>{{ activePage === 'admin' ? 'System administration' : activePage === 'user-dashboard' || activePage === 'user-profile' ? 'Your FuelScout account' : activePage === 'station-dashboard' ? 'Station owner dashboard' : 'Find fuel that goes further.' }}</h1>
+            <h1>{{ activePage === 'admin' ? 'System administration' : activePage === 'user-dashboard' || activePage === 'user-profile' ? 'Your LowGas account' : activePage === 'station-dashboard' ? 'Station owner dashboard' : 'Find fuel that goes further.' }}</h1>
           </div>
           <div class="top-actions">
             <div class="live-status"><span :class="['status-dot', { online: apiOnline }]" ></span>{{ apiOnline ? 'Station data available' : 'Station data limited' }}</div>
@@ -1064,7 +1079,7 @@ onBeforeUnmount(() => {
         </section>
 
         <footer class="page-foot">
-          <span>FuelScout <span class="foot-dot">·</span> Find your next fill-up.</span>
+          <span>LowGas <span class="foot-dot">·</span> Find your next fill-up.</span>
           <span>{{ mapReady ? 'OpenStreetMap' : 'Map loading' }} <span class="foot-dot">·</span> OSRM directions</span>
         </footer>
       </main>
@@ -1089,13 +1104,13 @@ onBeforeUnmount(() => {
     </div>
     <main v-else class="auth-gate">
       <header class="auth-gate-heading">
-        <a class="auth-gate-brand" href="#" aria-label="FuelScout home"><span class="brand-mark">F</span><span>fuel<span>scout</span></span></a>
+        <a class="auth-gate-brand" href="#" aria-label="LowGas home"><span class="brand-mark">L</span><span>Low<span>Gas</span></span></a>
         <div class="eyebrow">YOUR LOCAL FUEL GUIDE</div>
-        <h1>{{ authMode === 'login' ? 'Welcome to FuelScout.' : 'Create your FuelScout account.' }}</h1>
-        <p>Sign in or create an account to find stations, compare fuel prices, and use FuelScout’s features.</p>
+        <h1>{{ authMode === 'login' ? 'Welcome to LowGas.' : 'Create your LowGas account.' }}</h1>
+        <p>Sign in or create an account to find stations, compare fuel prices, and use LowGas’s features.</p>
       </header>
       <section class="auth-gate-card" aria-labelledby="auth-title">
-        <div class="eyebrow">{{ authMode === 'login' ? 'ACCOUNT SIGN IN' : 'JOIN FUELSCOUT' }}</div>
+        <div class="eyebrow">{{ authMode === 'login' ? 'ACCOUNT SIGN IN' : 'JOIN LOWGAS' }}</div>
         <h2 id="auth-title">{{ authMode === 'login' ? 'Good to see you.' : 'Let’s get started.' }}</h2>
         <p v-if="authError" class="auth-message is-error" role="alert">{{ authError }}</p>
 
@@ -1121,7 +1136,7 @@ onBeforeUnmount(() => {
           <button class="submit-button" type="submit" :disabled="busy">{{ busy ? 'Please wait…' : authMode === 'login' ? 'Sign in' : 'Create account' }}</button>
         </form>
 
-        <p class="auth-switch">{{ authMode === 'login' ? 'New to FuelScout?' : 'Already have an account?' }} <button @click="toggleAuthMode">{{ authMode === 'login' ? 'Create account' : 'Sign in' }}</button></p>
+        <p class="auth-switch">{{ authMode === 'login' ? 'New to LowGas?' : 'Already have an account?' }} <button @click="toggleAuthMode">{{ authMode === 'login' ? 'Create account' : 'Sign in' }}</button></p>
       </section>
     </main>
   </ion-app>

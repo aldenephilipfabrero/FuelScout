@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import FuelScout from './FuelScout.vue'
+import LowGas from './LowGas.vue'
 </script>
 
 <template>
-  <FuelScout />
+  <LowGas />
 </template>
