@@ -719,7 +719,7 @@ async function claimStation() {
 
 async function submitPriceReport() {
   const station = selected.value
-  if (!station || !account.value || !reportValue.value) return
+  if (!station || account.value?.role !== 'user' || !reportValue.value) return
   reportBusy.value = true
   try {
     const result = await request(`/stations/${station.id}/reports`, {
@@ -741,7 +741,7 @@ async function submitPriceReport() {
 }
 
 function openPriceReport() {
-  if (!account.value) return
+  if (account.value?.role !== 'user') return
   reportOpen.value = !reportOpen.value
 }
 
@@ -1059,8 +1059,8 @@ onBeforeUnmount(() => {
               </form>
 
               <button v-if="account?.role === 'station' && Number(account.stationId) !== Number(selected.id) && selected.sourceRef && !selected.sourceRef.startsWith('sample:')" class="directions-button" :disabled="busy" @click="claimStation">{{ busy ? 'Claiming…' : 'Claim this station' }}</button>
-              <button class="directions-button" @click="openPriceReport">{{ reportOpen ? 'Cancel report' : 'Report a price' }}</button>
-              <form v-if="reportOpen" class="price-editor" autocomplete="off" @submit.prevent="submitPriceReport">
+              <button v-if="account?.role === 'user'" class="directions-button" @click="openPriceReport">{{ reportOpen ? 'Cancel report' : 'Report a price' }}</button>
+              <form v-if="account?.role === 'user' && reportOpen" class="price-editor" autocomplete="off" @submit.prevent="submitPriceReport">
                 <select v-model="reportType" aria-label="Reported fuel type">
                   <option>Unleaded</option>
                   <option>Diesel</option>

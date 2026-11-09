@@ -1311,6 +1311,7 @@ app.delete('/api/stations/:id/prices/:priceId', authRequired, async (req, res, n
 
 app.post('/api/stations/:id/reports', authRequired, async (req, res, next) => {
   const auth = (req as AuthedRequest).auth!
+  if (auth.role !== 'user') return res.status(403).json({ error: 'Only driver accounts can submit community price reports.' })
   const stationId = Number(req.params.id)
   const { fuelType, price } = req.body ?? {}
   if (!Number.isSafeInteger(stationId) || stationId <= 0) return res.status(400).json({ error: 'Station ID is invalid.' })
